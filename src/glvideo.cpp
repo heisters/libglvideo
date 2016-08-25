@@ -60,44 +60,51 @@ seconds Player::getDuration() const
     return (seconds) m_file->GetMovie()->GetDurationMs() / 1000.0;
 }
 
-TrackType Player::getTrackType( size_t index ) const
+TrackDescription Player::getTrackDescription( size_t index ) const
 {
+    string codec = "unknown";
     auto id = m_trackIndexMap.at( index );
-    return TrackType( m_file->GetMovie()->GetTrack( id )->GetType() );
+    auto sd = m_file->GetMovie()->GetTrack( id )->GetSampleDescription( 0 );
+    AP4_String c;
+    if ( AP4_SUCCEEDED( sd->GetCodecString( c ))) {
+        codec = c.GetChars();
+    }
+    return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), codec );
 }
 
-TrackType::TrackType( int specifier ) :
-        m_specifier( specifier )
+TrackDescription::TrackDescription( int specifier, const string &codec ) :
+        m_specifier( specifier ),
+        m_codec( codec )
 {
     switch ((AP4_Track::Type) specifier ) {
         case AP4_Track::TYPE_UNKNOWN:
-            m_description = "unknown";
+            m_type = "unknown";
             break;
         case AP4_Track::TYPE_AUDIO:
-            m_description = "audio";
+            m_type = "audio";
             break;
         case AP4_Track::TYPE_VIDEO:
-            m_description = "video";
+            m_type = "video";
             break;
         case AP4_Track::TYPE_SYSTEM:
-            m_description = "system";
+            m_type = "system";
             break;
         case AP4_Track::TYPE_HINT:
-            m_description = "hint";
+            m_type = "hint";
             break;
         case AP4_Track::TYPE_TEXT:
-            m_description = "text";
+            m_type = "text";
             break;
         case AP4_Track::TYPE_JPEG:
-            m_description = "jpeg";
+            m_type = "jpeg";
             break;
         case AP4_Track::TYPE_RTP:
-            m_description = "rtp";
+            m_type = "rtp";
             break;
         case AP4_Track::TYPE_SUBTITLES:
-            m_description = "subtitles";
+            m_type = "subtitles";
             break;
         default:
-            m_description = "unspecified";
+            m_type = "unspecified";
     }
 }
