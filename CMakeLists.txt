@@ -30,7 +30,17 @@ set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL_LIBRARIES})
 # glvideo
 
 include_directories(include)
-set(SOURCE_FILES src/glvideo.cpp include/glvideo.h include/gl_includes.h)
+set(SOURCE_FILES
+        src/glvideo.cpp
+        include/glvideo.h
+        include/gl_includes.h
+        src/Frame.cpp
+        include/Frame.h
+        src/Movie.cpp
+        include/Movie.h
+        src/TrackDescription.cpp
+        include/TrackDescription.h
+        )
 
 include_directories(${INCLUDE_DIRS})
 add_library(glvideo STATIC ${SOURCE_FILES})
