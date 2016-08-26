@@ -72,7 +72,7 @@ const char *PezInitialize( int width, int height )
 
     string filename = "/Users/ian/Desktop/Bed00086523_V2-0002.mov";
 
-    glvideo::Player player( filename );
+    glvideo::Movie player( filename );
 
     cout << "Format: " << player.getFormat() << endl;
     cout << "Duration (seconds): " << player.getDuration() << endl;

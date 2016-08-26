@@ -11,7 +11,7 @@ using namespace std;
 using namespace glvideo;
 
 
-Player::Player( const string &filename )
+Movie::Movie( const string &filename )
 {
     AP4_Result result;
     AP4_ByteStream *input = NULL;
@@ -38,7 +38,7 @@ Player::Player( const string &filename )
 
 }
 
-string Player::getFormat() const
+string Movie::getFormat() const
 {
     if ( !m_file ) return "not loaded";
 
@@ -54,17 +54,17 @@ string Player::getFormat() const
     return ss.str();
 }
 
-size_t Player::getNumTracks() const
+size_t Movie::getNumTracks() const
 {
     return m_file->GetMovie()->GetTracks().ItemCount();
 }
 
-seconds Player::getDuration() const
+seconds Movie::getDuration() const
 {
     return (seconds) m_file->GetMovie()->GetDurationMs() / 1000.0;
 }
 
-TrackDescription Player::getTrackDescription( size_t index ) const
+TrackDescription Movie::getTrackDescription( size_t index ) const
 {
     string codec = "unknown";
     auto id = m_trackIndexMap.at( index );
@@ -76,7 +76,7 @@ TrackDescription Player::getTrackDescription( size_t index ) const
     return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), codec );
 }
 
-Frame::ref Player::getFrame( size_t index ) const
+Frame::ref Movie::getFrame( size_t index ) const
 {
     AP4_Sample sample;
     AP4_DataBuffer sampleData;

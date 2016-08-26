@@ -65,9 +65,9 @@ private:
     GLuint m_tex = 0;
 };
 
-class Player {
+class Movie {
 public:
-    Player( const std::string &filename );
+    Movie( const std::string &filename );
 
     std::string getFormat() const;
 
