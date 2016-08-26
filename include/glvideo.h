@@ -29,8 +29,7 @@ private:
 
 class Error : public std::runtime_error {
 public:
-    Error( const std::string &what ) : std::runtime_error( what )
-    {}
+    Error( const std::string &what ) : std::runtime_error( what ) {}
 };
 
 class Frame {
@@ -51,14 +50,11 @@ public:
     Frame &operator=( Frame const & ) = delete;
 
 
-    GLenum getTextureTarget() const
-    { return m_target; }
+    GLenum getTextureTarget() const { return m_target; }
 
-    GLuint getTextureId() const
-    { return m_tex; }
+    GLuint getTextureId() const { return m_tex; }
 
-    operator bool() const
-    { return m_tex != 0; }
+    operator bool() const { return m_tex != 0; }
 
 private:
     GLenum m_target = GL_TEXTURE_2D;

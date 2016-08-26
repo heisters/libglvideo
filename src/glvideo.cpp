@@ -140,7 +140,7 @@ TrackDescription::TrackDescription( int specifier, const string &codec ) :
 }
 
 Frame::Frame( unsigned char const *const data, GLsizei w, GLsizei h, GLenum format ) :
-m_target( GL_TEXTURE_2D )
+        m_target( GL_TEXTURE_2D )
 {
     if ( data != nullptr ) {
         glGenTextures( 1, &m_tex );
