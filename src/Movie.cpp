@@ -76,15 +76,15 @@ TrackDescription Movie::getTrackDescription( size_t index ) const
     return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), codec );
 }
 
-Frame::ref Movie::getFrame( size_t index ) const
+Frame::ref Movie::getFrame( size_t i_track, size_t i_sample ) const
 {
     AP4_Sample sample;
     AP4_DataBuffer sampleData;
     int w, h;
     int comp;
 
-    auto id = m_trackIndexMap.at( index );
-    if ( AP4_FAILED( m_file->GetMovie()->GetTrack( id )->ReadSample( 0, sample, sampleData ))) {
+    auto id = m_trackIndexMap.at( i_track );
+    if ( AP4_FAILED( m_file->GetMovie()->GetTrack( id )->ReadSample( i_sample, sample, sampleData ))) {
         return nullptr;
     }
 
