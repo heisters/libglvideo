@@ -1,0 +1,56 @@
+
+------------------------------------------
+Step 1 - Download and Install CMake
+------------------------------------------
+
+Before you scream "Oh no, not another build system!!", let me just say that CMake is lightweight, cross-platform, and well-worn; it's used in popular packages like Blender, KDE, and Boost.  It doesn't just generates makefiles, it generates *project files* which you can open with IDE's like Visual Studio and Xcode.
+
+You can get it from here:
+
+   http://www.cmake.org/cmake/resources/software.html
+
+If you're on Ubuntu, don't bother with the web site; just type this:
+
+   > sudo apt-get install CMake
+
+------------------------------------------
+Step 2 - Choose Your Own Adventure
+------------------------------------------
+
+Open a command prompt and perform the following steps, depending on your platform:
+
+VISUAL STUDIO 2010:
+
+   > mkdir build
+   > cd build
+   > cmake .. -G "Visual Studio 10"  
+   > PezPackage.sln
+   > Right-click "PezPackage" in Solution Explorer and make it your StartUp Project.
+   > Press F5
+    
+If you're using an older Visual Studio, just run "cmake" (no arguments) to see a list of options.
+For example, a 2005 project can be built like this:
+
+   > cmake .. -G "Visual Studio 8 2005"
+
+LINUX -OR- MAC FROM COMMAND LINE:
+
+   > mkdir build
+   > cd build
+   > cmake ..
+   > make
+   > ./PezPackage
+ 
+MAC WITH XCODE:
+
+   > cmake . -G "Xcode"
+   > open PezPackage.xcodeproj
+   > Press Command + Enter
+
+IF YOU WANT TO DEBUG WITH GDB:
+
+   > mkdir build
+   > cd build
+   > cmake .. -DCMAKE_BUILD_TYPE=Debug
+   > make VERBOSE=1
+   > gdb PezPackage

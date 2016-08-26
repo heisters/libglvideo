@@ -1,3 +1,6 @@
 [submodule "lib/Bento4"]
 	path = lib/Bento4
 	url = https://github.com/axiomatic-systems/Bento4.git
+[submodule "lib/stb"]
+	path = lib/stb
+	url = git@github.com:nothings/stb.git

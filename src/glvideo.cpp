@@ -1,6 +1,10 @@
 #include "glvideo.h"
 #include "Ap4.h"
-#include "Ap4File.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_JPEG
+
+#include <stb_image.h>
 #include <sstream>
 
 using namespace std;
@@ -72,6 +76,32 @@ TrackDescription Player::getTrackDescription( size_t index ) const
     return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), codec );
 }
 
+Frame::ref Player::getFrame( size_t index ) const
+{
+    AP4_Sample sample;
+    AP4_DataBuffer sampleData;
+    int w, h;
+    int comp;
+
+    auto id = m_trackIndexMap.at( index );
+    if ( AP4_FAILED( m_file->GetMovie()->GetTrack( id )->ReadSample( 0, sample, sampleData ))) {
+        return nullptr;
+    }
+
+
+    unsigned char *data = stbi_load_from_memory( sampleData.GetData(),
+                                                 sampleData.GetDataSize(),
+                                                 &w, &h,
+                                                 &comp,
+                                                 STBI_rgb );
+
+
+    Frame::ref frame = Frame::create( data, w, h, comp == 3 ? GL_RGB : GL_RGBA );
+    stbi_image_free( data );
+
+    return frame;
+}
+
 TrackDescription::TrackDescription( int specifier, const string &codec ) :
         m_specifier( specifier ),
         m_codec( codec )
@@ -107,4 +137,22 @@ TrackDescription::TrackDescription( int specifier, const string &codec ) :
         default:
             m_type = "unspecified";
     }
+}
+
+Frame::Frame( unsigned char const *const data, GLsizei w, GLsizei h, GLenum format ) :
+m_target( GL_TEXTURE_2D )
+{
+    if ( data != nullptr ) {
+        glGenTextures( 1, &m_tex );
+        glBindTexture( m_target, m_tex );
+        glTexImage2D( m_target, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, data );
+        glTexParameteri( m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+        glTexParameteri( m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+        glBindTexture( m_target, 0 );
+    }
+}
+
+Frame::~Frame()
+{
+    glDeleteTextures( 1, &m_tex );
 }
