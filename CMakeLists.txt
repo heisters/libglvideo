@@ -31,7 +31,6 @@ set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL_LIBRARIES})
 
 include_directories(include)
 set(SOURCE_FILES
-        src/glvideo.cpp
         include/glvideo.h
         include/gl_includes.h
         src/Frame.cpp
@@ -40,7 +39,6 @@ set(SOURCE_FILES
         include/Movie.h
         src/TrackDescription.cpp
         include/TrackDescription.h
-        src/GLContext.cpp
         include/GLContext.h)
 
 include_directories(${INCLUDE_DIRS})
