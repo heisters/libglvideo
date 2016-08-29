@@ -20,7 +20,8 @@ class GLContextAllocationError : public std::exception {
 
 class GLContextDataMac {
 public:
-    typedef std::shared_ptr< GLContextDataMac > ref;
+    typedef std::shared_ptr<GLContextDataMac> ref;
+
     GLContextDataMac( const CGLContextObj &ctx ) : m_context( ctx ) {};
 
     CGLContextObj &getContext() { return m_context; }
@@ -38,24 +39,7 @@ class GLContextTemplate {
 public:
     typedef typename std::shared_ptr<GLContextTemplate<Data>> ref;
 
-    static ref makeSharedFromCurrent()
-    {
-
-#if defined( GLVIDEO_MAC )
-        CGLContextObj prevContext = ::CGLGetCurrentContext();
-        CGLPixelFormatObj sharedContextPixelFormat = ::CGLGetPixelFormat( prevContext );
-        CGLContextObj newContext;
-        if ( ::CGLCreateContext( sharedContextPixelFormat, prevContext, (CGLContextObj *) &newContext ) !=
-             kCGLNoError ) {
-            throw GLContextAllocationError();
-        }
-
-        GLContextDataMac::ref data( new GLContextDataMac( newContext ) );
-        return ref( new GLContextTemplate<GLContextDataMac>( data ));
-#else
-#error Platform not supported.
-#endif
-    }
+    static ref makeSharedFromCurrent();
 
     GLContextTemplate() = delete;
 
@@ -64,14 +48,7 @@ private:
 
 public:
 
-    void makeCurrent()
-    {
-#if defined( GLVIDEO_MAC )
-        ::CGLSetCurrentContext( m_data->getContext());
-#else
-#error Platform not supported.
-#endif
-    }
+    void makeCurrent();
 
 
 private:
@@ -79,8 +56,8 @@ private:
     typename Data::ref m_data;
 };
 
-
 #if defined( GLVIDEO_MAC )
+
 typedef GLContextTemplate<GLContextDataMac> GLContext;
 #else
 #error Platform not supported.

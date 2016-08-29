@@ -104,13 +104,17 @@ void Movie::pause()
 
 }
 
-// FIXME: causes EXC_BAD_ACCESS on glGenTextures. Probs need to be sure multi-threaded GL access is setup?
 void Movie::read( GLContext::ref context )
 {
     context->makeCurrent();
 
     while ( m_isPlaying ) {
-        if ( !m_frameBuffer.is_full()) {
+        if ( m_frameBuffer.is_full()) {
+            //FIXME: just trying not to burn CPU too much. Should calculate this based on framerate.
+            this_thread::sleep_for( chrono::milliseconds( 10 ));
+
+        } else {
+            //FIXME: don't assume track 0
             auto frame = getFrame( 0, mt_sample++ );
             m_frameBuffer.push( frame );
         }
