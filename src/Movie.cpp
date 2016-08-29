@@ -126,9 +126,12 @@ void Movie::queueFrames()
 {
     chrono::milliseconds ms( 500 );
     while ( m_isPlaying ) {
-        Frame::ref frame;
-        m_frameBuffer.try_pop( &frame );
-        m_frameQueue.push( frame );
+        if ( !m_nextFrameFresh ) {
+            Frame::ref frame;
+            m_frameBuffer.try_pop( &frame );
+            m_nextFrame = frame;
+            m_nextFrameFresh = true;
+        }
         this_thread::sleep_for( ms );
     }
 }
@@ -136,8 +139,9 @@ void Movie::queueFrames()
 Frame::ref Movie::getCurrentFrame()
 {
     Frame::ref frame;
-    if ( m_frameQueue.try_pop( &frame )) {
-        m_currentFrame = frame;
+    if ( m_nextFrameFresh ) {
+        m_currentFrame = m_nextFrame;
+        m_nextFrameFresh = false;
     }
     return m_currentFrame;
 }

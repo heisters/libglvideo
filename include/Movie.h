@@ -96,6 +96,10 @@ private:
     Options m_options;
     /// The current frame.
     Frame::ref m_currentFrame = nullptr;
+    /// The next frame.
+    Frame::ref m_nextFrame = nullptr;
+    /// Is the next frame new?
+    std::atomic_bool m_nextFrameFresh{false};
     /// A shared GL context that will be used for threaded texture creation.
     GLContext::ref m_texContext = nullptr;
 
@@ -109,7 +113,7 @@ private:
     void queueFrames();
 
     concurrent_buffer<Frame::ref> m_frameBuffer;
-    concurrent_queue<Frame::ref> m_frameQueue;
+
     std::thread m_readThread;
     std::thread m_queueThread;
     std::atomic_bool m_isPlaying{false};
