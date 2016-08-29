@@ -40,7 +40,8 @@ set(SOURCE_FILES
         include/Movie.h
         src/TrackDescription.cpp
         include/TrackDescription.h
-        )
+        src/GLContext.cpp
+        include/GLContext.h)
 
 include_directories(${INCLUDE_DIRS})
 add_library(glvideo STATIC ${SOURCE_FILES})
@@ -55,7 +56,7 @@ include_directories(
         "${PROJECT_SOURCE_DIR}/lib/pez/lib/libpez"
 )
 
-add_subdirectory(lib/pez)
+add_subdirectory(lib/pez EXCLUDE_FROM_ALL)
 
 
 IF (WIN32)

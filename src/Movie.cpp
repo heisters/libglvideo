@@ -1,17 +1,21 @@
 #include "Movie.h"
 #include "Ap4.h"
+#include <sstream>
+#include <chrono>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
 
 #include <stb_image.h>
-#include <sstream>
 
 using namespace std;
 using namespace glvideo;
 
 
-Movie::Movie( const string &filename )
+Movie::Movie( const GLContext::ref &texContext, const string &filename, const Options &options ) :
+        m_texContext( texContext ),
+        m_options( options ),
+        m_frameBuffer( options.bufferSize())
 {
     AP4_Result result;
     AP4_ByteStream *input = NULL;
@@ -36,6 +40,13 @@ Movie::Movie( const string &filename )
         item = item->GetNext();
     }
 
+}
+
+Movie::~Movie()
+{
+    if ( isPlaying()) stop();
+    if ( m_readThread.joinable()) m_readThread.join();
+    if ( m_queueThread.joinable()) m_queueThread.join();
 }
 
 string Movie::getFormat() const
@@ -76,6 +87,57 @@ TrackDescription Movie::getTrackDescription( size_t index ) const
     return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), codec );
 }
 
+void Movie::play()
+{
+    m_isPlaying = true;
+    m_readThread = thread( bind( &Movie::read, this, m_texContext ));
+    m_queueThread = thread( bind( &Movie::queueFrames, this ));
+}
+
+void Movie::stop()
+{
+    m_isPlaying = false;
+}
+
+void Movie::pause()
+{
+
+}
+
+// FIXME: causes EXC_BAD_ACCESS on glGenTextures. Probs need to be sure multi-threaded GL access is setup?
+void Movie::read( GLContext::ref context )
+{
+    context->makeCurrent();
+
+    while ( m_isPlaying ) {
+        if ( !m_frameBuffer.is_full()) {
+            auto frame = getFrame( 0, mt_sample++ );
+            m_frameBuffer.push( frame );
+        }
+    }
+}
+
+// TODO: implement timing
+void Movie::queueFrames()
+{
+    chrono::milliseconds ms( 500 );
+    while ( m_isPlaying ) {
+        Frame::ref frame;
+        m_frameBuffer.try_pop( &frame );
+        m_frameQueue.push( frame );
+        this_thread::sleep_for( ms );
+    }
+}
+
+Frame::ref Movie::getCurrentFrame()
+{
+    Frame::ref frame;
+    if ( m_frameQueue.try_pop( &frame )) {
+        m_currentFrame = frame;
+    }
+    return m_currentFrame;
+}
+
 Frame::ref Movie::getFrame( size_t i_track, size_t i_sample ) const
 {
     AP4_Sample sample;
@@ -101,4 +163,6 @@ Frame::ref Movie::getFrame( size_t i_track, size_t i_sample ) const
 
     return frame;
 }
+
+
 

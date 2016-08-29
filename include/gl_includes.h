@@ -1,10 +1,13 @@
 #pragma once
 
-#ifdef __APPLE__
+#include "glvideo.h"
+
+#ifdef GLVIDEO_MAC
 #include <OpenGL/gl.h>
 #else
-#ifdef _WIN32
+#ifdef GLVIDEO_WIN
   #include <windows.h>
 #endif
 #include <GL/gl.h>
 #endif
+

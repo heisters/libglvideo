@@ -1,6 +1,7 @@
 #include <iostream>
 #include <pez.h>
 #include "glvideo.h"
+#include "Movie.h"
 
 using namespace std;
 
@@ -28,7 +29,8 @@ void main()
 }
 )EOF";
 
-static glvideo::Frame::ref frame;
+
+glvideo::Movie::ref movie;
 
 static void BuildGeometry( float aspect );
 
@@ -47,6 +49,13 @@ void PezUpdate( unsigned int elapsedMilliseconds )
 void PezRender()
 {
     glClear( GL_COLOR_BUFFER_BIT );
+
+    glActiveTexture( GL_TEXTURE0 );
+    auto frame = movie->getCurrentFrame();
+    if ( frame ) {
+        glBindTexture( frame->getTextureTarget(), frame->getTextureId());
+    }
+
 
     glMatrixMode( GL_PROJECTION );
     glPushMatrix();
@@ -72,19 +81,17 @@ const char *PezInitialize( int width, int height )
 
     string filename = "/Users/ian/Desktop/Bed00086523_V2-0002.mov";
 
-    glvideo::Movie player( filename );
+    auto ctx = glvideo::GLContext::makeSharedFromCurrent();
+    movie = glvideo::Movie::create( ctx, filename );
 
-    cout << "Format: " << player.getFormat() << endl;
-    cout << "Duration (seconds): " << player.getDuration() << endl;
-    cout << "Number of tracks: " << player.getNumTracks() << endl;
-    for ( int i = 0; i < player.getNumTracks(); ++i ) {
-        cout << "\tTrack " << i << " type: " << player.getTrackDescription( i ) << endl;
+    cout << "Format: " << movie->getFormat() << endl;
+    cout << "Duration (seconds): " << movie->getDuration() << endl;
+    cout << "Number of tracks: " << movie->getNumTracks() << endl;
+    for ( int i = 0; i < movie->getNumTracks(); ++i ) {
+        cout << "\tTrack " << i << " type: " << movie->getTrackDescription( i ) << endl;
     }
 
-    frame = player.getFrame( 0 );
-
-    glActiveTexture( GL_TEXTURE0 );
-    glBindTexture( frame->getTextureTarget(), frame->getTextureId());
+    movie->play();
 
     return "Test Playback";
 }
