@@ -2,14 +2,13 @@
 #include "Ap4.h"
 #include <sstream>
 #include <algorithm>
+#include "decoders/jpeg.h"
+#include "decoders/hap.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_JPEG
-
-#include <stb_image.h>
 
 using namespace std;
 using namespace glvideo;
+
 
 
 Movie::Movie( const GLContext::ref &texContext, const string &filename, const Options &options ) :
@@ -43,8 +42,22 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
             m_height = max( m_height, (uint32_t) ((double) track->GetHeight() / double( 1 << 16 )));
             m_fps = decltype( m_fps )(
                     max( m_fps.count(), (float) 1000 * track->GetSampleCount() / (float) track->GetDurationMs()));
+            m_codec = getTrackCodec( track );
+            m_videoTrack = track;
         }
         item = item->GetNext();
+    }
+
+    if ( m_videoTrack == nullptr ) {
+        throw Error( "could not find video track in " + filename );
+    }
+
+    if ( m_codec == "jpeg" ) {
+        m_decoder = decodeJpegFrame;
+    } else if ( m_codec == "HapY" ) {
+        m_decoder = decodeHapFrame;
+    } else {
+        throw UnsupportedCodecError( "unsupported codec: " + m_codec );
     }
 }
 
@@ -81,16 +94,29 @@ seconds Movie::getDuration() const
     return (seconds) m_file->GetMovie()->GetDurationMs() / 1000.0;
 }
 
-TrackDescription Movie::getTrackDescription( size_t index ) const
+std::string Movie::getTrackCodec( size_t index ) const
+{
+    auto id = m_trackIndexMap.at( index );
+    auto track = m_file->GetMovie()->GetTrack( id );
+    return getTrackCodec( track );
+}
+
+std::string Movie::getTrackCodec( AP4_Track *track ) const
 {
     string codec = "unknown";
-    auto id = m_trackIndexMap.at( index );
-    auto sd = m_file->GetMovie()->GetTrack( id )->GetSampleDescription( 0 );
+    auto sd = track->GetSampleDescription( 0 );
     AP4_String c;
     if ( AP4_SUCCEEDED( sd->GetCodecString( c ))) {
         codec = c.GetChars();
     }
-    return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), codec );
+
+    return codec;
+}
+
+TrackDescription Movie::getTrackDescription( size_t index ) const
+{
+    auto id = m_trackIndexMap.at( index );
+    return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), getTrackCodec( index ) );
 }
 
 void Movie::play()
@@ -120,8 +146,7 @@ void Movie::read( GLContext::ref context )
             //this_thread::sleep_for( chrono::milliseconds( 10 ));
 
         } else {
-            //FIXME: don't assume track 0
-            auto frame = getFrame( 0, mt_sample++ );
+            auto frame = getFrame( m_videoTrack, mt_sample++ );
             m_frameBuffer.push( frame );
         }
     }
@@ -163,7 +188,6 @@ void Movie::queueFrames()
 
 Frame::ref Movie::getCurrentFrame()
 {
-    Frame::ref frame;
     if ( m_nextFrameFresh ) {
         m_currentFrame = m_nextFrame;
         m_nextFrameFresh = false;
@@ -171,29 +195,20 @@ Frame::ref Movie::getCurrentFrame()
     return m_currentFrame;
 }
 
-Frame::ref Movie::getFrame( size_t i_track, size_t i_sample ) const
+
+
+Frame::ref Movie::getFrame( AP4_Track * track, size_t i_sample ) const
 {
     AP4_Sample sample;
     AP4_DataBuffer sampleData;
-    int w, h;
-    int comp;
 
-    auto id = m_trackIndexMap.at( i_track );
-    if ( AP4_FAILED( m_file->GetMovie()->GetTrack( id )->ReadSample( i_sample, sample, sampleData ))) {
+
+    if ( AP4_FAILED( track->ReadSample( i_sample, sample, sampleData ))) {
         return nullptr;
     }
 
-    // FIXME: stbi is helluv too slow for 4k
 
-    unsigned char *data = stbi_load_from_memory( sampleData.GetData(),
-                                                 sampleData.GetDataSize(),
-                                                 &w, &h,
-                                                 &comp,
-                                                 STBI_rgb );
-
-
-    Frame::ref frame = Frame::create( data, w, h, comp == 3 ? GL_RGB : GL_RGBA );
-    stbi_image_free( data );
+    Frame::ref frame = m_decoder( sampleData );
 
     return frame;
 }

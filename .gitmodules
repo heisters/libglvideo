@@ -4,3 +4,6 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = git@github.com:nothings/stb.git
+[submodule "lib/hap"]
+	path = lib/hap
+	url = git@github.com:Vidvox/hap.git

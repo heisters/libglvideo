@@ -4,18 +4,25 @@
 #include <map>
 #include <thread>
 #include <chrono>
+#include <Ap4DataBuffer.h>
 #include "Frame.h"
 #include "TrackDescription.h"
 #include "GLContext.h"
 #include "concurrency.h"
 
 class AP4_File;
+class AP4_Track;
 
 namespace glvideo {
 
 
 /// Type alias to use for any representation of time.
 typedef double seconds;
+
+class UnsupportedCodecError : public std::runtime_error {
+public:
+    UnsupportedCodecError( const std::string &what ) : std::runtime_error( what ) {}
+};
 
 /// \class Movie
 /// \brief Plays a movie from a file.
@@ -99,6 +106,10 @@ public:
     Frame::ref getCurrentFrame();
 
 private:
+    std::string getTrackCodec( size_t index ) const;
+    std::string getTrackCodec( AP4_Track * track ) const;
+
+
     AP4_File *m_file = NULL;
     std::map<size_t, uint32_t> m_trackIndexMap;
     Options m_options;
@@ -106,13 +117,16 @@ private:
     Frame::ref m_nextFrame = nullptr;
     std::atomic_bool m_nextFrameFresh{false};
     GLContext::ref m_texContext = nullptr;
+    AP4_Track * m_videoTrack = nullptr;
     std::chrono::duration< float > m_fps;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
+    std::string m_codec;
 
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.
-    Frame::ref getFrame( size_t i_track, size_t i_sample ) const;
+    Frame::ref getFrame( AP4_Track * track, size_t i_sample ) const;
+    std::function< Frame::ref ( AP4_DataBuffer& ) > m_decoder;
 
     /// Reads frames into the frame buffer on a thread.
     void read( GLContext::ref context );

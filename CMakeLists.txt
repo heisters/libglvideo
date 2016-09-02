@@ -39,7 +39,12 @@ set(SOURCE_FILES
         include/Movie.h
         src/TrackDescription.cpp
         include/TrackDescription.h
-        include/GLContext.h src/GLContext.cpp)
+        src/GLContext.cpp
+        include/GLContext.h
+        src/decoders/jpeg.cpp
+        include/decoders/jpeg.h
+        src/decoders/hap.cpp
+        include/decoders/hap.h)
 
 include_directories(${INCLUDE_DIRS})
 add_library(glvideo STATIC ${SOURCE_FILES})
