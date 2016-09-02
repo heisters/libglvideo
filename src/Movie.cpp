@@ -1,7 +1,7 @@
 #include "Movie.h"
 #include "Ap4.h"
 #include <sstream>
-#include <chrono>
+#include <algorithm>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
@@ -36,10 +36,16 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
     auto item = m_file->GetMovie()->GetTracks().FirstItem();
     size_t index = 0;
     while ( item ) {
-        m_trackIndexMap[index++] = item->GetData()->GetId();
+        auto track = item->GetData();
+        m_trackIndexMap[index++] = track->GetId();
+        if ( track->GetType() == AP4_Track::TYPE_VIDEO ) {
+            m_width = max( m_width, (uint32_t) ((double) track->GetWidth() / double( 1 << 16 )));
+            m_height = max( m_height, (uint32_t) ((double) track->GetHeight() / double( 1 << 16 )));
+            m_fps = decltype( m_fps )(
+                    max( m_fps.count(), (float) 1000 * track->GetSampleCount() / (float) track->GetDurationMs()));
+        }
         item = item->GetNext();
     }
-
 }
 
 Movie::~Movie()
@@ -111,7 +117,7 @@ void Movie::read( GLContext::ref context )
     while ( m_isPlaying ) {
         if ( m_frameBuffer.is_full()) {
             //FIXME: just trying not to burn CPU too much. Should calculate this based on framerate.
-            this_thread::sleep_for( chrono::milliseconds( 10 ));
+            //this_thread::sleep_for( chrono::milliseconds( 10 ));
 
         } else {
             //FIXME: don't assume track 0
@@ -124,15 +130,34 @@ void Movie::read( GLContext::ref context )
 // TODO: implement timing
 void Movie::queueFrames()
 {
-    chrono::milliseconds ms( 500 );
+    mt_lastFrameQueuedAt = clock::now();
+
     while ( m_isPlaying ) {
+
         if ( !m_nextFrameFresh ) {
+
             Frame::ref frame;
-            m_frameBuffer.try_pop( &frame );
-            m_nextFrame = frame;
-            m_nextFrameFresh = true;
+            if ( m_frameBuffer.try_pop( &frame )) {
+
+
+                m_nextFrame = frame;
+                m_nextFrameFresh = true;
+
+
+                auto now = clock::now();
+
+                auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
+                auto nextFrameTime = mt_lastFrameQueuedAt + spf;
+                mt_lastFrameQueuedAt = now;
+
+                //cout << chrono::duration_cast<chrono::milliseconds>((nextFrameTime - now)).count() << endl;
+                if ( nextFrameTime > now ) {
+                    this_thread::sleep_for( nextFrameTime - now );
+                }
+            }
+
         }
-        this_thread::sleep_for( ms );
+
     }
 }
 
@@ -158,6 +183,7 @@ Frame::ref Movie::getFrame( size_t i_track, size_t i_sample ) const
         return nullptr;
     }
 
+    // FIXME: stbi is helluv too slow for 4k
 
     unsigned char *data = stbi_load_from_memory( sampleData.GetData(),
                                                  sampleData.GetDataSize(),

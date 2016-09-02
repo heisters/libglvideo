@@ -86,6 +86,8 @@ const char *PezInitialize( int width, int height )
 
     cout << "Format: " << movie->getFormat() << endl;
     cout << "Duration (seconds): " << movie->getDuration() << endl;
+    cout << "Size: " << movie->getWidth() << "x" << movie->getHeight() << endl;
+    cout << "Framerate: " << movie->getFramerate() << endl;
     cout << "Number of tracks: " << movie->getNumTracks() << endl;
     for ( int i = 0; i < movie->getNumTracks(); ++i ) {
         cout << "\tTrack " << i << " type: " << movie->getTrackDescription( i ) << endl;

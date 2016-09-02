@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <thread>
+#include <chrono>
 #include "Frame.h"
 #include "TrackDescription.h"
 #include "GLContext.h"
@@ -42,12 +43,13 @@ public:
 
 
     typedef std::shared_ptr<Movie> ref;
+    typedef std::chrono::high_resolution_clock clock;
 
     /// Returns a ref to a movie constructed from a source \a filename.
     static ref
     create( const GLContext::ref &texContext, const std::string &filename, const Options &options = Options())
     {
-        return ref( new Movie( texContext, filename, options ) );
+        return ref( new Movie( texContext, filename, options ));
     }
 
     /// Constructs a movie from a \a texContext, and a source \a filename.
@@ -72,6 +74,15 @@ public:
     /// Returns the length of the movie in seconds.
     seconds getDuration() const;
 
+    /// Returns the framerate
+    float getFramerate() const { return m_fps.count(); }
+
+    /// Returns the width
+    uint32_t getWidth() const { return m_width; }
+
+    /// Returns the height
+    uint32_t getHeight() const { return m_height; }
+
     /// Starts playing the movie.
     void play();
 
@@ -88,20 +99,17 @@ public:
     Frame::ref getCurrentFrame();
 
 private:
-    /// A pointer to the AP4 file object.
     AP4_File *m_file = NULL;
-    /// A mapping of indexes to track ids. Indexes start at 0.
     std::map<size_t, uint32_t> m_trackIndexMap;
-    /// User-supplied options for the movie.
     Options m_options;
-    /// The current frame.
     Frame::ref m_currentFrame = nullptr;
-    /// The next frame.
     Frame::ref m_nextFrame = nullptr;
-    /// Is the next frame new?
     std::atomic_bool m_nextFrameFresh{false};
-    /// A shared GL context that will be used for threaded texture creation.
     GLContext::ref m_texContext = nullptr;
+    std::chrono::duration< float > m_fps;
+    uint32_t m_width = 0;
+    uint32_t m_height = 0;
+
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.
     Frame::ref getFrame( size_t i_track, size_t i_sample ) const;
@@ -121,6 +129,6 @@ private:
     /// Non-threadsafe member variables (for use only within their threads)
 
     size_t mt_sample = 0;
-
+    clock::time_point mt_lastFrameQueuedAt;
 };
 }
