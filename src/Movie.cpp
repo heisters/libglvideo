@@ -208,7 +208,7 @@ Frame::ref Movie::getFrame( AP4_Track * track, size_t i_sample ) const
     }
 
 
-    Frame::ref frame = m_decoder( sampleData );
+    Frame::ref frame = m_decoder( sampleData, m_width, m_height );
 
     return frame;
 }

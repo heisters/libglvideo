@@ -79,8 +79,8 @@ const char *PezInitialize( int width, int height )
     BuildGeometry((float) width / (float) height );
     LoadEffect();
 
-    string filename = "/Users/ian/Desktop/Bed - Side00086523_V1-0001.mov";
-//    string filename = "/Users/ian/Desktop/out.mov";
+//    string filename = "/Users/ian/Desktop/Bed - Side00086523_V1-0001.mov";
+    string filename = "/Users/ian/Desktop/out.mov";
 
     auto ctx = glvideo::GLContext::makeSharedFromCurrent();
     movie = glvideo::Movie::create( ctx, filename );

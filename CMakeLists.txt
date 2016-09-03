@@ -20,6 +20,15 @@ set(EXTRA_LIBS ${EXTRA_LIBS} ap4)
 include_directories("${PROJECT_SOURCE_DIR}/lib/stb")
 
 
+# Hap
+
+include_directories("${PROJECT_SOURCE_DIR}/lib/hap/source")
+
+## ... which requires snappy
+
+include_directories("${PROJECT_SOURCE_DIR}/lib/snappy")
+
+
 # OpenGL
 
 find_package(OpenGL REQUIRED)
@@ -31,6 +40,13 @@ set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL_LIBRARIES})
 
 include_directories(include)
 set(SOURCE_FILES
+        lib/snappy/snappy-c.h
+        lib/snappy/snappy.cc
+        lib/snappy/snappy-sinksource.cc
+        lib/snappy/snappy-sinksource.h
+        lib/snappy/snappy-c.cc
+        lib/hap/source/hap.c
+        lib/hap/source/hap.h
         include/glvideo.h
         include/gl_includes.h
         src/Frame.cpp
@@ -44,7 +60,8 @@ set(SOURCE_FILES
         src/decoders/jpeg.cpp
         include/decoders/jpeg.h
         src/decoders/hap.cpp
-        include/decoders/hap.h)
+        include/decoders/hap.h
+        )
 
 include_directories(${INCLUDE_DIRS})
 add_library(glvideo STATIC ${SOURCE_FILES})

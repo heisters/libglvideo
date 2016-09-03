@@ -7,3 +7,6 @@
 [submodule "lib/hap"]
 	path = lib/hap
 	url = git@github.com:Vidvox/hap.git
+[submodule "lib/snappy"]
+	path = lib/snappy
+	url = git@github.com:google/snappy.git
