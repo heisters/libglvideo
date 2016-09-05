@@ -21,7 +21,7 @@ void HapMTDecode( HapDecodeWorkFunction function, void *p, unsigned int count, v
 
 Frame::ref decodeHapFrame( AP4_DataBuffer &sampleData, int width, int height )
 {
-    return decodeHapFrame( sampleData, width, height, sampleData.GetDataSize() * 4 );
+    return decodeHapFrame( sampleData, width, height, sampleData.GetDataSize() * 2 );
 }
 
 Frame::ref decodeHapFrame( AP4_DataBuffer &sampleData, int width, int height, unsigned int outputBufferSize )
@@ -62,6 +62,7 @@ Frame::ref decodeHapFrame( AP4_DataBuffer &sampleData, int width, int height, un
     );
 
     if ( result == HapResult_Buffer_Too_Small ) {
+        cerr << "WARNING, HAP: buffer too small, reallocating" << endl;
         return decodeHapFrame( sampleData, width, height, outputBufferSize * 2 );
     } else if ( result != HapResult_No_Error ) {
         return nullptr;

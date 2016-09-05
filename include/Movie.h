@@ -72,6 +72,9 @@ public:
     /// Returns a string representation of the container format (eg. "qt 512").
     std::string getFormat() const;
 
+    /// Returns a string representation of the primary video track's codec
+    std::string getCodec() const { return m_codec; }
+
     /// Returns the number of tracks found in the container.
     size_t getNumTracks() const;
 

@@ -1,5 +1,8 @@
 #include <iostream>
+#include <deque>
 #include <pez.h>
+#include <iomanip>
+#include <chrono>
 #include "glvideo.h"
 #include "Movie.h"
 
@@ -29,22 +32,56 @@ void main()
 }
 )EOF";
 
+static const std::string YCoCg_FRAGMENT_SHADER_SOURCE =
+        R"EOF(
+varying vec2 OutCoord;
+uniform sampler2D Sampler;
+
+void main()
+{
+    vec4 color = texture2D(Sampler, OutCoord);
+    float Co = color.x - ( 0.5 * 256.0 / 255.0 );
+    float Cg = color.y - ( 0.5 * 256.0 / 255.0 );
+    float Y = color.w;
+    gl_FragColor = vec4( Y + Co - Cg, Y + Cg, Y - Co - Cg, color.a );
+}
+)EOF";
+
 
 glvideo::Movie::ref movie;
 
 static void BuildGeometry( float aspect );
 
-static void LoadEffect();
+static void LoadEffect( bool isYCoCg = false );
+
+deque<unsigned int> frameTimes;
+static unsigned int sumElapsedMilliseconds = 0;
+typedef chrono::high_resolution_clock hrclock;
+static hrclock::time_point lastReportTime = hrclock::now();
 
 enum {
     PositionSlot, TexCoordSlot
 };
 
-void PezHandleMouse( int x, int y, int action )
-{}
+void PezHandleMouse( int x, int y, int action ) {}
 
 void PezUpdate( unsigned int elapsedMilliseconds )
-{}
+{
+    frameTimes.push_back( elapsedMilliseconds );
+    sumElapsedMilliseconds += elapsedMilliseconds;
+    while ( frameTimes.size() > 100 ) {
+        sumElapsedMilliseconds -= frameTimes.front();
+        frameTimes.pop_front();
+    }
+
+    auto now = hrclock::now();
+    if ( chrono::duration_cast<chrono::seconds>( now - lastReportTime ).count() > 1 ) {
+        double avg = (double) sumElapsedMilliseconds / (double) frameTimes.size();
+        double fps = 1000.0 / avg;
+        cout << "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" << endl;
+        lastReportTime = now;
+    }
+}
 
 void PezRender()
 {
@@ -76,14 +113,16 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-    BuildGeometry((float) width / (float) height );
-    LoadEffect();
-
-//    string filename = "/Users/ian/Desktop/Bed - Side00086523_V1-0001.mov";
-    string filename = "/Users/ian/Desktop/out.mov";
+//    string filename = "/Users/ian/Desktop/MJPEG.mov";
+    string filename = "/Users/ian/Desktop/Hap.mov";
 
     auto ctx = glvideo::GLContext::makeSharedFromCurrent();
     movie = glvideo::Movie::create( ctx, filename );
+
+
+    BuildGeometry((float) width / (float) height );
+    LoadEffect( movie->getCodec() == "HapY" );
+
 
     cout << "Format: " << movie->getFormat() << endl;
     cout << "Duration (seconds): " << movie->getDuration() << endl;
@@ -128,10 +167,15 @@ static void BuildGeometry( float aspect )
     glEnableVertexAttribArray( TexCoordSlot );
 }
 
-static void LoadEffect()
+static void LoadEffect( bool isYCoCg )
 {
-    const char *vsSource = VERTEX_SHADER_SOURCE.c_str(),
-            *fsSource = FRAGMENT_SHADER_SOURCE.c_str();
+    const char *vsSource = VERTEX_SHADER_SOURCE.c_str();
+    const char *fsSource;
+    if ( isYCoCg ) {
+        fsSource = YCoCg_FRAGMENT_SHADER_SOURCE.c_str();
+    } else {
+        fsSource = FRAGMENT_SHADER_SOURCE.c_str();
+    }
     GLuint vsHandle, fsHandle;
     GLint compileSuccess, linkSuccess;
     GLchar compilerSpew[256];
