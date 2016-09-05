@@ -1,7 +1,6 @@
 #include "decoders/hap.h"
 #include "hap.h"
 #include <iostream>
-#include <vector>
 
 using namespace glvideo;
 using namespace std;
@@ -19,15 +18,23 @@ void HapMTDecode( HapDecodeWorkFunction function, void *p, unsigned int count, v
 }
 
 
-Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData )
+decoders::Hap::Hap( int w, int h ) :
+        Decoder( w, h )
 {
-    return decode( sampleData, sampleData.GetDataSize() * 2 );
+    m_decompressedTextureBuffer.resize( w * h * 3, 0 );
+
+    // HapGetFrameTextureFormat
+    // Usually (ie always for mov or avi) dimensions are stored
+    // independently in the container, so armed with those and
+    // the texture format (from HapGetFrameTextureFormat()) you
+    // can calculate it exactly (round dimensions up to a
+    // multiple of four, apply known DXT block size).
 }
 
-Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData, unsigned int outputBufferSize )
+
+Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData )
 {
     unsigned int result;
-    vector<unsigned char> decompressedTexture( outputBufferSize, 0 );
     unsigned long decompressedSize;
     unsigned int numTextures;
     unsigned int texFormat;
@@ -55,15 +62,16 @@ Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData, unsigned int outpu
             0, /* texture index */
             HapMTDecode, /* decode callback */
             NULL, /* info */
-            decompressedTexture.data(),
-            decompressedTexture.size(),
+            m_decompressedTextureBuffer.data(),
+            m_decompressedTextureBuffer.size(),
             &decompressedSize, /* bytes actually used in decompressedTexture */
             &texFormat /* output texture format */
     );
 
     if ( result == HapResult_Buffer_Too_Small ) {
         cerr << "WARNING, HAP: buffer too small, reallocating" << endl;
-        return decode( sampleData, outputBufferSize * 2 );
+        m_decompressedTextureBuffer.resize( m_decompressedTextureBuffer.size() * 2 );
+        return decode( sampleData );
     } else if ( result != HapResult_No_Error ) {
         return nullptr;
     }
@@ -85,5 +93,5 @@ Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData, unsigned int outpu
             .height( m_height )
             .internalFormat( format )
             .compressed( true );
-    return Frame::create( decompressedTexture.data(), decompressedSize, fmt );
+    return Frame::create( m_decompressedTextureBuffer.data(), decompressedSize, fmt );
 }
