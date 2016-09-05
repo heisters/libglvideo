@@ -6,7 +6,7 @@
 
 using namespace glvideo;
 
-Frame::ref decodeJpegFrame( AP4_DataBuffer &sampleData, int width, int height )
+Frame::ref decoders::JPEG::decode( AP4_DataBuffer &sampleData )
 {
     int w, h;
     int comp;

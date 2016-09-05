@@ -6,7 +6,6 @@
 using namespace glvideo;
 using namespace std;
 
-Frame::ref decodeHapFrame( AP4_DataBuffer &sampleData, int width, int height, unsigned int outputBufferSize );
 
 void HapMTDecode( HapDecodeWorkFunction function, void *p, unsigned int count, void *info )
 {
@@ -19,12 +18,13 @@ void HapMTDecode( HapDecodeWorkFunction function, void *p, unsigned int count, v
     }
 }
 
-Frame::ref decodeHapFrame( AP4_DataBuffer &sampleData, int width, int height )
+
+Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData )
 {
-    return decodeHapFrame( sampleData, width, height, sampleData.GetDataSize() * 2 );
+    return decode( sampleData, sampleData.GetDataSize() * 2 );
 }
 
-Frame::ref decodeHapFrame( AP4_DataBuffer &sampleData, int width, int height, unsigned int outputBufferSize )
+Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData, unsigned int outputBufferSize )
 {
     unsigned int result;
     vector<unsigned char> decompressedTexture( outputBufferSize, 0 );
@@ -63,7 +63,7 @@ Frame::ref decodeHapFrame( AP4_DataBuffer &sampleData, int width, int height, un
 
     if ( result == HapResult_Buffer_Too_Small ) {
         cerr << "WARNING, HAP: buffer too small, reallocating" << endl;
-        return decodeHapFrame( sampleData, width, height, outputBufferSize * 2 );
+        return decode( sampleData, outputBufferSize * 2 );
     } else if ( result != HapResult_No_Error ) {
         return nullptr;
     }
@@ -81,10 +81,9 @@ Frame::ref decodeHapFrame( AP4_DataBuffer &sampleData, int width, int height, un
 
     Frame::Format fmt;
     fmt
-            .width( width )
-            .height( height )
+            .width( m_width )
+            .height( m_height )
             .internalFormat( format )
             .compressed( true );
     return Frame::create( decompressedTexture.data(), decompressedSize, fmt );
 }
-

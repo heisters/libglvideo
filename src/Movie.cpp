@@ -10,7 +10,6 @@ using namespace std;
 using namespace glvideo;
 
 
-
 Movie::Movie( const GLContext::ref &texContext, const string &filename, const Options &options ) :
         m_texContext( texContext ),
         m_options( options ),
@@ -52,10 +51,11 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
         throw Error( "could not find video track in " + filename );
     }
 
-    if ( m_codec == "jpeg" ) {
-        m_decoder = decodeJpegFrame;
-    } else if ( m_codec == "HapY" ) {
-        m_decoder = decodeHapFrame;
+    // TODO: make decoder selection dynamic
+    if ( decoders::JPEG::matches( m_codec ) ) {
+        m_decoder = unique_ptr< Decoder>( new decoders::JPEG( m_width, m_height ) );
+    } else if ( decoders::Hap::matches( m_codec ) ) {
+        m_decoder = unique_ptr< Decoder>( new decoders::Hap( m_width, m_height ) );
     } else {
         throw UnsupportedCodecError( "unsupported codec: " + m_codec );
     }
@@ -208,7 +208,7 @@ Frame::ref Movie::getFrame( AP4_Track * track, size_t i_sample ) const
     }
 
 
-    Frame::ref frame = m_decoder( sampleData, m_width, m_height );
+    Frame::ref frame = m_decoder->decode( sampleData );
 
     return frame;
 }

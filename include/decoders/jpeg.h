@@ -1,6 +1,21 @@
 #pragma once
 
-#include "Frame.h"
-#include <AP4DataBuffer.h>
+#include "Decoder.h"
 
-glvideo::Frame::ref decodeJpegFrame( AP4_DataBuffer &sampleData, int width, int height );
+
+namespace glvideo {
+namespace decoders {
+
+class JPEG : public Decoder {
+public:
+    static bool matches( const std::string &codec ) { return codec == "jpeg"; }
+
+    JPEG( int w, int h ) : Decoder( w, h ) {}
+
+    virtual Frame::ref decode( AP4_DataBuffer &sampleData );
+
+private:
+};
+
+}
+}

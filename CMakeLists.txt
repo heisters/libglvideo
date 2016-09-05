@@ -57,6 +57,8 @@ set(SOURCE_FILES
         include/TrackDescription.h
         src/GLContext.cpp
         include/GLContext.h
+        src/Decoder.cpp
+        include/Decoder.h
         src/decoders/jpeg.cpp
         include/decoders/jpeg.h
         src/decoders/hap.cpp

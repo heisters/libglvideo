@@ -8,6 +8,7 @@
 #include "Frame.h"
 #include "TrackDescription.h"
 #include "GLContext.h"
+#include "Decoder.h"
 #include "concurrency.h"
 
 class AP4_File;
@@ -129,7 +130,7 @@ private:
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.
     Frame::ref getFrame( AP4_Track * track, size_t i_sample ) const;
-    std::function< Frame::ref ( AP4_DataBuffer&, int, int ) > m_decoder;
+    std::unique_ptr< Decoder > m_decoder;
 
     /// Reads frames into the frame buffer on a thread.
     void read( GLContext::ref context );
