@@ -19,7 +19,8 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
     AP4_ByteStream *input = NULL;
 
 
-    // create input stream
+    // Create input stream
+
     result = AP4_FileByteStream::Create( filename.c_str(),
                                          AP4_FileByteStream::STREAM_MODE_READ,
                                          input );
@@ -30,6 +31,8 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
     m_file = new AP4_File( *input, true );
     input->Release();
 
+
+    // Read movie tracks, and metadata, find the video track
 
     auto item = m_file->GetMovie()->GetTracks().FirstItem();
     size_t index = 0;
@@ -51,11 +54,22 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
         throw Error( "could not find video track in " + filename );
     }
 
+
+    // Find and instantiate the decoder
+
+    AP4_Sample sample;
+    AP4_DataBuffer sampleData;
+
+    if ( AP4_FAILED( m_videoTrack->ReadSample( 0, sample, sampleData ))) {
+        throw Error( "could not read video track in " + filename );
+    }
+
+
     // TODO: make decoder selection dynamic
     if ( decoders::JPEG::matches( m_codec ) ) {
-        m_decoder = unique_ptr< Decoder>( new decoders::JPEG( m_width, m_height ) );
+        m_decoder = unique_ptr< Decoder>( new decoders::JPEG( m_width, m_height, sampleData ) );
     } else if ( decoders::Hap::matches( m_codec ) ) {
-        m_decoder = unique_ptr< Decoder>( new decoders::Hap( m_width, m_height ) );
+        m_decoder = unique_ptr< Decoder>( new decoders::Hap( m_width, m_height, sampleData ) );
     } else {
         throw UnsupportedCodecError( "unsupported codec: " + m_codec );
     }

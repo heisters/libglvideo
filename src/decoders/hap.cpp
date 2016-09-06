@@ -18,17 +18,41 @@ void HapMTDecode( HapDecodeWorkFunction function, void *p, unsigned int count, v
 }
 
 
-decoders::Hap::Hap( int w, int h ) :
-        Decoder( w, h )
+decoders::Hap::Hap( int w, int h, AP4_DataBuffer &sample0 ) :
+        Decoder( w, h, sample0 )
 {
-    m_decompressedTextureBuffer.resize( w * h * 3, 0 );
+    int size;
+    unsigned int format;
+    HapGetFrameTextureFormat( sample0.GetData(), sample0.GetDataSize(), 0, &format );
 
-    // HapGetFrameTextureFormat
-    // Usually (ie always for mov or avi) dimensions are stored
-    // independently in the container, so armed with those and
-    // the texture format (from HapGetFrameTextureFormat()) you
-    // can calculate it exactly (round dimensions up to a
-    // multiple of four, apply known DXT block size).
+    int blockSize, channels;
+    switch ( format ) {
+        case HapTextureFormat_RGB_DXT1:
+            blockSize = 8;
+            channels = 3;
+            break;
+        case HapTextureFormat_RGBA_DXT5:
+            blockSize = 4;
+            channels = 4;
+            break;
+        case HapTextureFormat_YCoCg_DXT5:
+            blockSize = 4;
+            channels = 3;
+            break;
+        case HapTextureFormat_A_RGTC1:
+            blockSize = 4;
+            channels = 1;
+            break;
+        default:
+            throw runtime_error( "unknown hap texture format" );
+    }
+
+    int roundedW = w + 4 - (w % 4);
+    int roundedH = w + 4 - (h % 4);
+
+    size = roundedW * roundedH * channels / blockSize;
+
+    m_decompressedTextureBuffer.resize( size, 0 );
 }
 
 
@@ -67,6 +91,7 @@ Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData )
             &decompressedSize, /* bytes actually used in decompressedTexture */
             &texFormat /* output texture format */
     );
+
 
     if ( result == HapResult_Buffer_Too_Small ) {
         cerr << "WARNING, HAP: buffer too small, reallocating" << endl;
