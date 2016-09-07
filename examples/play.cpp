@@ -1,6 +1,7 @@
 #include <iostream>
 #include <deque>
 #include <pez.h>
+#include <glew.h>
 #include <iomanip>
 #include <chrono>
 #include "glvideo.h"
@@ -22,7 +23,7 @@ void main()
 )EOF";
 
 static const std::string FRAGMENT_SHADER_SOURCE =
-        R"EOF(
+R"EOF(
 varying vec2 OutCoord;
 uniform sampler2D Sampler;
 
@@ -83,9 +84,29 @@ void PezUpdate( unsigned int elapsedMilliseconds )
     }
 }
 
+
+void checkGlError()
+{
+	GLenum err( glGetError() );
+	while ( err != GL_NO_ERROR ) {
+		string error;
+
+		switch ( err ) {
+		case GL_INVALID_OPERATION:      error = "INVALID_OPERATION";      break;
+		case GL_INVALID_ENUM:           error = "INVALID_ENUM";           break;
+		case GL_INVALID_VALUE:          error = "INVALID_VALUE";          break;
+		case GL_OUT_OF_MEMORY:          error = "OUT_OF_MEMORY";          break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION:  error = "INVALID_FRAMEBUFFER_OPERATION";  break;
+		}
+
+		cerr << "GL_" << error.c_str() << endl;
+		err = glGetError();
+	}
+}
+
 void PezRender()
 {
-    glClear( GL_COLOR_BUFFER_BIT );
+	glClear( GL_COLOR_BUFFER_BIT );
 
     glActiveTexture( GL_TEXTURE0 );
     auto frame = movie->getCurrentFrame();
@@ -94,35 +115,34 @@ void PezRender()
     }
 
 
-    glMatrixMode( GL_PROJECTION );
-    glPushMatrix();
-    glLoadIdentity();
+ //   glMatrixMode( GL_PROJECTION );
+	//glPushMatrix();
+	//glLoadIdentity();
 
-    glMatrixMode( GL_MODELVIEW );
-    glPushMatrix();
-    glLoadIdentity();
+ //   glMatrixMode( GL_MODELVIEW );
+ //   glPushMatrix();
+ //   glLoadIdentity();
 
     glDrawArrays( GL_TRIANGLES, 0, 6 );
 
-    glPopMatrix();
-    glMatrixMode( GL_PROJECTION );
+ //   glPopMatrix();
+ //   glMatrixMode( GL_PROJECTION );
 
-    glPopMatrix();
-    glMatrixMode( GL_MODELVIEW );
+ //   glPopMatrix();
+ //   glMatrixMode( GL_MODELVIEW );
 }
 
 const char *PezInitialize( int width, int height )
 {
 //    string filename = "/Users/ian/Desktop/MJPEG.mov";
-    string filename = "/Users/ian/Desktop/Hap.mov";
+    string filename = "C:\\Users\\ian\\Desktop\\Hap.mov";
 
     auto ctx = glvideo::GLContext::makeSharedFromCurrent();
     movie = glvideo::Movie::create( ctx, filename );
 
 
     BuildGeometry((float) width / (float) height );
-    LoadEffect( movie->getCodec() == "HapY" );
-
+	LoadEffect( movie->getCodec() == "HapY" );
 
     cout << "Format: " << movie->getFormat() << endl;
     cout << "Duration (seconds): " << movie->getDuration() << endl;
@@ -158,13 +178,17 @@ static void BuildGeometry( float aspect )
     GLenum usage = GL_STATIC_DRAW;
     GLvoid *texCoordOffset = (GLvoid *) (sizeof( float ) * 2);
 
+	GLuint vao;
+	glGenVertexArrays( 1, &vao );
+	glBindVertexArray( vao );
+
     glGenBuffers( 1, &vboHandle );
-    glBindBuffer( GL_ARRAY_BUFFER, vboHandle );
-    glBufferData( GL_ARRAY_BUFFER, vboSize, verts, usage );
-    glVertexAttribPointer( PositionSlot, 2, GL_FLOAT, GL_FALSE, stride, 0 );
-    glVertexAttribPointer( TexCoordSlot, 2, GL_FLOAT, GL_FALSE, stride, texCoordOffset );
-    glEnableVertexAttribArray( PositionSlot );
-    glEnableVertexAttribArray( TexCoordSlot );
+	glBindBuffer( GL_ARRAY_BUFFER, vboHandle );
+	glBufferData( GL_ARRAY_BUFFER, vboSize, verts, usage );
+	glVertexAttribPointer( PositionSlot, 2, GL_FLOAT, GL_FALSE, stride, 0 );
+	glVertexAttribPointer( TexCoordSlot, 2, GL_FLOAT, GL_FALSE, stride, texCoordOffset );
+	glEnableVertexAttribArray( PositionSlot );
+	glEnableVertexAttribArray( TexCoordSlot );
 }
 
 static void LoadEffect( bool isYCoCg )

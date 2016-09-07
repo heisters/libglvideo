@@ -1,4 +1,5 @@
 #include "Frame.h"
+#include "gl_includes.h"
 
 using namespace glvideo;
 
@@ -8,7 +9,7 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, Format format 
     if ( data != nullptr ) {
         glEnable( m_target );
         glGenTextures( 1, &m_tex );
-        glBindTexture( m_target, m_tex );
+		glBindTexture( m_target, m_tex );
 
         if ( format.compressed() ) {
             glCompressedTexImage2D( m_target, 0, format.internalFormat(), format.width(), format.height(), 0, imageSize, data );
@@ -26,5 +27,5 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, Format format 
 
 Frame::~Frame()
 {
-    glDeleteTextures( 1, &m_tex );
+	glDeleteTextures( 1, &m_tex );
 }

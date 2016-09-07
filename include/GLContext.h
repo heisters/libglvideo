@@ -2,14 +2,7 @@
 
 #include "glvideo.h"
 #include <memory>
-
-#if defined( GLVIDEO_MAC )
-
-#include <OpenGL/OpenGL.h>
-
-#elif defined( GLVIDEO_MSW )
-#include <windows.h>
-#endif
+#include "gl_includes.h"
 
 namespace glvideo {
 class GLContextAllocationError : public std::exception {
@@ -28,6 +21,26 @@ public:
 
 private:
     CGLContextObj m_context;
+};
+
+#elif defined( GLVIDEO_MSW )
+
+class GLContextDataMsw {
+public:
+	typedef std::shared_ptr<GLContextDataMsw> ref;
+
+	GLContextDataMsw( const HDC &dc, const HGLRC &ctx ) : m_context( ctx ), m_deviceContext( dc ) {};
+	~GLContextDataMsw()
+	{
+		::wglDeleteContext( m_context );
+	}
+
+	HGLRC & getContext() { return m_context; }
+	HDC & getDeviceContext() { return m_deviceContext; }
+
+private:
+	HGLRC m_context;
+	HDC m_deviceContext;
 };
 
 #else
@@ -59,6 +72,11 @@ private:
 #if defined( GLVIDEO_MAC )
 
 typedef GLContextTemplate<GLContextDataMac> GLContext;
+
+#elif defined( GLVIDEO_MSW )
+
+typedef GLContextTemplate<GLContextDataMsw> GLContext;
+
 #else
 #error Platform not supported.
 #endif

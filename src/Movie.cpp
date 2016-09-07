@@ -158,41 +158,38 @@ void Movie::queueFrames()
     mt_lastFrameQueuedAt = clock::now();
 
     while ( m_isPlaying ) {
-
-        if ( !m_nextFrameFresh ) {
-
-            Frame::ref frame;
-            if ( m_frameBuffer.try_pop( &frame )) {
+        
+		Frame::ref frame;
+        if ( m_frameBuffer.try_pop( &frame )) {
 
 
-                m_nextFrame = frame;
-                m_nextFrameFresh = true;
+			{
+				lock_guard< mutex > lock( m_frameQueueMutex );
+				m_currentFrame = frame;
+			}
 
 
-                auto now = clock::now();
+            auto now = clock::now();
 
-                auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
-                auto nextFrameTime = mt_lastFrameQueuedAt + spf;
-                mt_lastFrameQueuedAt = now;
+            auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
+            auto nextFrameTime = mt_lastFrameQueuedAt + spf;
+			mt_lastFrameQueuedAt = now;
 
-                //cout << chrono::duration_cast<chrono::milliseconds>((nextFrameTime - now)).count() << endl;
-                if ( nextFrameTime > now ) {
-                    this_thread::sleep_for( nextFrameTime - now );
-                }
-            }
-
+			// busy loop, because sleep is innacurrate
+			while ( clock::now() < nextFrameTime ) {}
         }
-
     }
 }
 
 Frame::ref Movie::getCurrentFrame()
 {
-    if ( m_nextFrameFresh ) {
-        m_currentFrame = m_nextFrame;
-        m_nextFrameFresh = false;
-    }
-    return m_currentFrame;
+	Frame::ref frame;
+	{
+		lock_guard< mutex > lock( m_frameQueueMutex );
+		frame = m_currentFrame;
+	}
+    
+    return frame;
 }
 
 

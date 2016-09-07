@@ -4,6 +4,7 @@
 #include <map>
 #include <thread>
 #include <chrono>
+#include <atomic>
 #include <Ap4DataBuffer.h>
 #include "Frame.h"
 #include "TrackDescription.h"
@@ -118,8 +119,6 @@ private:
     std::map<size_t, uint32_t> m_trackIndexMap;
     Options m_options;
     Frame::ref m_currentFrame = nullptr;
-    Frame::ref m_nextFrame = nullptr;
-    std::atomic_bool m_nextFrameFresh{false};
     GLContext::ref m_texContext = nullptr;
     AP4_Track * m_videoTrack = nullptr;
     std::chrono::duration< float > m_fps;
@@ -143,6 +142,7 @@ private:
     std::thread m_readThread;
     std::thread m_queueThread;
     std::atomic_bool m_isPlaying{false};
+	std::mutex m_frameQueueMutex;
 
     /// Non-threadsafe member variables (for use only within their threads)
 

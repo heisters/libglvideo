@@ -2,10 +2,12 @@
 
 #include "glvideo.h"
 
+#include <glew.h>
+
 #ifdef GLVIDEO_MAC
 #include <OpenGL/gl.h>
 #else
-#ifdef GLVIDEO_WIN
+#ifdef GLVIDEO_MSW
   #include <windows.h>
 #endif
 #include <GL/gl.h>
