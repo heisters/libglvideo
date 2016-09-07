@@ -5,7 +5,6 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
-#include <Ap4DataBuffer.h>
 #include "Frame.h"
 #include "TrackDescription.h"
 #include "GLContext.h"
@@ -110,6 +109,9 @@ public:
 	/// Set whether the movie should automatically loop when it reaches the end (chainable).
 	Movie & loop( bool loop = true ) { m_loop = loop; return *this; }
 
+	/// Set the playhead to the beginning of the video.
+	Movie & seekToStart() { m_sample = 0; return *this; }
+
     /// Returns the current Frame.
     Frame::ref getCurrentFrame() const;
 
@@ -142,10 +144,10 @@ private:
     std::thread m_readThread;
     std::atomic_bool m_isPlaying{false};
 	std::atomic_bool m_loop{ false };
+	std::atomic< size_t > m_sample{ 0 };
 
     /// Non-threadsafe member variables (for use only within their threads)
 
-    size_t mt_sample = 0;
     clock::time_point mt_lastFrameQueuedAt;
     std::deque< Frame::ref > mt_frameBuffer;
     size_t mt_frameBufferSize;

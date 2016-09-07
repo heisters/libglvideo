@@ -154,5 +154,9 @@ ENDIF ()
 
 ## play
 
-add_executable(play examples/play.cpp)
+if(WIN32)
+	add_executable(play WIN32 examples/play.cpp)
+else()
+	add_executable(play examples/play.cpp)
+endif()
 target_link_libraries(play glvideo PezEcosystem ${PLATFORM_LIBS})

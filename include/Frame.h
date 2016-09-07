@@ -105,9 +105,14 @@ public:
     /// Returns false if the texture was not successfully allocated.
     operator bool() const { return m_tex != 0; }
 
+	/// Set whether the frame should delete the texture when the frame is destroyed.
+	/// Call this if you pass ownership off to another object.
+	void setOwnsTexture( bool owns = true ) { m_ownsTexture = owns; }
+
 private:
     GLenum m_target = GL_TEXTURE_2D;
     GLuint m_tex = 0;
+	bool m_ownsTexture = true;
 };
 
 }

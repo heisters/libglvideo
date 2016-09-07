@@ -1,6 +1,8 @@
+#include <glew.h>
 #include "decoders/hap.h"
 #include "hap.h"
 #include <iostream>
+#include <Ap4DataBuffer.h>
 
 using namespace glvideo;
 using namespace std;
@@ -18,12 +20,12 @@ void HapMTDecode( HapDecodeWorkFunction function, void *p, unsigned int count, v
 }
 
 
-decoders::Hap::Hap( int w, int h, AP4_DataBuffer &sample0 ) :
+decoders::Hap::Hap( int w, int h, AP4_DataBuffer *sample0 ) :
         Decoder( w, h, sample0 )
 {
     int size;
     unsigned int format;
-    HapGetFrameTextureFormat( sample0.GetData(), sample0.GetDataSize(), 0, &format );
+    HapGetFrameTextureFormat( sample0->GetData(), sample0->GetDataSize(), 0, &format );
 
     int blockSize, channels;
     switch ( format ) {
@@ -56,7 +58,7 @@ decoders::Hap::Hap( int w, int h, AP4_DataBuffer &sample0 ) :
 }
 
 
-Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData )
+Frame::ref decoders::Hap::decode( AP4_DataBuffer *sampleData )
 {
     unsigned int result;
     unsigned long decompressedSize;
@@ -66,7 +68,7 @@ Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData )
 
     // Get the number of textures in the frame, as though we care
 
-    result = HapGetFrameTextureCount( sampleData.GetData(), sampleData.GetDataSize(), &numTextures );
+    result = HapGetFrameTextureCount( sampleData->GetData(), sampleData->GetDataSize(), &numTextures );
     if ( result != HapResult_No_Error ) {
         return nullptr;
     }
@@ -81,8 +83,8 @@ Frame::ref decoders::Hap::decode( AP4_DataBuffer &sampleData )
     // Decode the frame into compressed texture data
 
     result = HapDecode(
-            sampleData.GetData(),
-            sampleData.GetDataSize(),
+            sampleData->GetData(),
+            sampleData->GetDataSize(),
             0, /* texture index */
             HapMTDecode, /* decode callback */
             NULL, /* info */

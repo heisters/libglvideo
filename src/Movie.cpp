@@ -74,9 +74,9 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
 
     // TODO: make decoder selection dynamic
     if ( decoders::JPEG::matches( m_codec )) {
-        m_decoder = unique_ptr<Decoder>( new decoders::JPEG( m_width, m_height, sampleData ));
+        m_decoder = unique_ptr<Decoder>( new decoders::JPEG( m_width, m_height, &sampleData ));
     } else if ( decoders::Hap::matches( m_codec )) {
-        m_decoder = unique_ptr<Decoder>( new decoders::Hap( m_width, m_height, sampleData ));
+        m_decoder = unique_ptr<Decoder>( new decoders::Hap( m_width, m_height, &sampleData ));
     } else {
         throw UnsupportedCodecError( "unsupported codec: " + m_codec );
     }
@@ -169,13 +169,13 @@ void Movie::read( GLContext::ref context )
 
         // decode
 
-        if ( mt_frameBuffer.size() < mt_frameBufferSize && mt_sample < m_numSamples ) {
+        if ( mt_frameBuffer.size() < mt_frameBufferSize && m_sample < m_numSamples ) {
 
-            auto frame = getFrame( m_videoTrack, mt_sample );
+            auto frame = getFrame( m_videoTrack, m_sample );
 			mt_frameBuffer.push_back( frame );
 
-			mt_sample++;
-			if ( m_loop ) mt_sample = mt_sample % m_numSamples;
+			m_sample++;
+			if ( m_loop ) m_sample = m_sample % m_numSamples;
 		}
 
 
@@ -207,7 +207,7 @@ Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
     }
 
 
-    Frame::ref frame = m_decoder->decode( sampleData );
+    Frame::ref frame = m_decoder->decode( &sampleData );
 
     return frame;
 }

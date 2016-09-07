@@ -2,7 +2,6 @@
 
 #include "glvideo.h"
 
-#include <glew.h>
 
 #ifdef GLVIDEO_MAC
 #include <OpenGL/gl.h>

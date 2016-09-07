@@ -3,16 +3,17 @@
 #define STBI_ONLY_JPEG
 
 #include <stb_image.h>
+#include <Ap4DataBuffer.h>
 
 using namespace glvideo;
 
-Frame::ref decoders::JPEG::decode( AP4_DataBuffer &sampleData )
+Frame::ref decoders::JPEG::decode( AP4_DataBuffer *sampleData )
 {
     int w, h;
     int comp;
 
-    unsigned char *data = stbi_load_from_memory( sampleData.GetData(),
-                                                 sampleData.GetDataSize(),
+    unsigned char *data = stbi_load_from_memory( sampleData->GetData(),
+                                                 sampleData->GetDataSize(),
                                                  &w, &h,
                                                  &comp,
                                                  STBI_rgb );
