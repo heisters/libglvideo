@@ -108,7 +108,7 @@ public:
     void pause();
 
     /// Returns the current Frame.
-    Frame::ref getCurrentFrame();
+    Frame::ref getCurrentFrame() const;
 
 private:
     std::string getTrackCodec( size_t index ) const;
@@ -131,22 +131,18 @@ private:
     Frame::ref getFrame( AP4_Track * track, size_t i_sample ) const;
     std::unique_ptr< Decoder > m_decoder;
 
-    /// Reads frames into the frame buffer on a thread.
+    /// Reads frames into the frame buffer on a thread, and queues them.
     void read( GLContext::ref context );
 
-    /// Queues frames from the frame buffer into m_currentFrame.
-    void queueFrames();
-
-    concurrent_buffer<Frame::ref> m_frameBuffer;
 
     std::thread m_readThread;
-    std::thread m_queueThread;
     std::atomic_bool m_isPlaying{false};
-	std::mutex m_frameQueueMutex;
 
     /// Non-threadsafe member variables (for use only within their threads)
 
     size_t mt_sample = 0;
     clock::time_point mt_lastFrameQueuedAt;
+    std::deque< Frame::ref > mt_frameBuffer;
+    size_t mt_frameBufferSize;
 };
 }

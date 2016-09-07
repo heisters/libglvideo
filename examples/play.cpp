@@ -135,7 +135,8 @@ void PezRender()
 const char *PezInitialize( int width, int height )
 {
 //    string filename = "/Users/ian/Desktop/MJPEG.mov";
-    string filename = "C:\\Users\\ian\\Desktop\\Hap.mov";
+//    string filename = "C:\\Users\\ian\\Desktop\\Hap.mov";
+    string filename = "/Users/ian/Desktop/Hap.mov";
 
     auto ctx = glvideo::GLContext::makeSharedFromCurrent();
     movie = glvideo::Movie::create( ctx, filename );
@@ -178,9 +179,11 @@ static void BuildGeometry( float aspect )
     GLenum usage = GL_STATIC_DRAW;
     GLvoid *texCoordOffset = (GLvoid *) (sizeof( float ) * 2);
 
+#if defined(GLVIDEO_MSW)
 	GLuint vao;
 	glGenVertexArrays( 1, &vao );
 	glBindVertexArray( vao );
+#endif
 
     glGenBuffers( 1, &vboHandle );
 	glBindBuffer( GL_ARRAY_BUFFER, vboHandle );

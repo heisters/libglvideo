@@ -13,7 +13,7 @@ using namespace glvideo;
 Movie::Movie( const GLContext::ref &texContext, const string &filename, const Options &options ) :
         m_texContext( texContext ),
         m_options( options ),
-        m_frameBuffer( options.bufferSize())
+        mt_frameBufferSize( options.bufferSize())
 {
     AP4_Result result;
     AP4_ByteStream *input = NULL;
@@ -66,10 +66,10 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
 
 
     // TODO: make decoder selection dynamic
-    if ( decoders::JPEG::matches( m_codec ) ) {
-        m_decoder = unique_ptr< Decoder>( new decoders::JPEG( m_width, m_height, sampleData ) );
-    } else if ( decoders::Hap::matches( m_codec ) ) {
-        m_decoder = unique_ptr< Decoder>( new decoders::Hap( m_width, m_height, sampleData ) );
+    if ( decoders::JPEG::matches( m_codec )) {
+        m_decoder = unique_ptr<Decoder>( new decoders::JPEG( m_width, m_height, sampleData ));
+    } else if ( decoders::Hap::matches( m_codec )) {
+        m_decoder = unique_ptr<Decoder>( new decoders::Hap( m_width, m_height, sampleData ));
     } else {
         throw UnsupportedCodecError( "unsupported codec: " + m_codec );
     }
@@ -79,7 +79,6 @@ Movie::~Movie()
 {
     if ( isPlaying()) stop();
     if ( m_readThread.joinable()) m_readThread.join();
-    if ( m_queueThread.joinable()) m_queueThread.join();
 }
 
 string Movie::getFormat() const
@@ -130,14 +129,13 @@ std::string Movie::getTrackCodec( AP4_Track *track ) const
 TrackDescription Movie::getTrackDescription( size_t index ) const
 {
     auto id = m_trackIndexMap.at( index );
-    return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), getTrackCodec( index ) );
+    return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), getTrackCodec( index ));
 }
 
 void Movie::play()
 {
     m_isPlaying = true;
     m_readThread = thread( bind( &Movie::read, this, m_texContext ));
-    m_queueThread = thread( bind( &Movie::queueFrames, this ));
 }
 
 void Movie::stop()
@@ -153,62 +151,40 @@ void Movie::pause()
 void Movie::read( GLContext::ref context )
 {
     context->makeCurrent();
-
-    while ( m_isPlaying ) {
-        if ( m_frameBuffer.is_full()) {
-            //FIXME: just trying not to burn CPU too much. Should calculate this based on framerate.
-            //this_thread::sleep_for( chrono::milliseconds( 10 ));
-
-        } else {
-            auto frame = getFrame( m_videoTrack, mt_sample++ );
-            m_frameBuffer.push( frame );
-        }
-    }
-}
-
-// TODO: implement timing
-void Movie::queueFrames()
-{
     mt_lastFrameQueuedAt = clock::now();
 
     while ( m_isPlaying ) {
-        
-		Frame::ref frame;
-        if ( m_frameBuffer.try_pop( &frame )) {
+        const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
+        const auto nextFrameTime = mt_lastFrameQueuedAt + spf;
 
 
-			{
-				lock_guard< mutex > lock( m_frameQueueMutex );
-				m_currentFrame = frame;
-			}
+        // decode
+
+        if ( mt_frameBuffer.size() < mt_frameBufferSize ) {
+
+            auto frame = getFrame( m_videoTrack, mt_sample++ );
+            mt_frameBuffer.push_back( frame );
+        }
 
 
-            auto now = clock::now();
+        // queue
 
-            auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
-            auto nextFrameTime = mt_lastFrameQueuedAt + spf;
-			mt_lastFrameQueuedAt = now;
+        if ( clock::now() >= nextFrameTime && ! mt_frameBuffer.empty() ) {
 
-			// busy loop, because sleep is innacurrate
-			while ( clock::now() < nextFrameTime ) {}
+            m_currentFrame = mt_frameBuffer.front();
+            mt_frameBuffer.pop_front();
+            mt_lastFrameQueuedAt = clock::now();
         }
     }
 }
 
-Frame::ref Movie::getCurrentFrame()
+Frame::ref Movie::getCurrentFrame() const
 {
-	Frame::ref frame;
-	{
-		lock_guard< mutex > lock( m_frameQueueMutex );
-		frame = m_currentFrame;
-	}
-    
-    return frame;
+    return m_currentFrame;
 }
 
 
-
-Frame::ref Movie::getFrame( AP4_Track * track, size_t i_sample ) const
+Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
 {
     AP4_Sample sample;
     AP4_DataBuffer sampleData;

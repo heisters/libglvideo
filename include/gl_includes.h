@@ -6,6 +6,7 @@
 
 #ifdef GLVIDEO_MAC
 #include <OpenGL/gl.h>
+#include <OpenGL/OpenGL.h>
 #else
 #ifdef GLVIDEO_MSW
   #include <windows.h>

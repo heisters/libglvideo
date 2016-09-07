@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Frame.h"
 #include "gl_includes.h"
 
@@ -27,5 +28,5 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, Format format 
 
 Frame::~Frame()
 {
-	glDeleteTextures( 1, &m_tex );
+    if ( m_tex ) glDeleteTextures( 1, &m_tex );
 }
