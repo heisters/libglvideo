@@ -114,28 +114,12 @@ void PezRender()
         glBindTexture( frame->getTextureTarget(), frame->getTextureId());
     }
 
-
- //   glMatrixMode( GL_PROJECTION );
-	//glPushMatrix();
-	//glLoadIdentity();
-
- //   glMatrixMode( GL_MODELVIEW );
- //   glPushMatrix();
- //   glLoadIdentity();
-
     glDrawArrays( GL_TRIANGLES, 0, 6 );
-
- //   glPopMatrix();
- //   glMatrixMode( GL_PROJECTION );
-
- //   glPopMatrix();
- //   glMatrixMode( GL_MODELVIEW );
 }
 
 const char *PezInitialize( int width, int height )
 {
 //    string filename = "/Users/ian/Desktop/MJPEG.mov";
-//    string filename = "C:\\Users\\ian\\Desktop\\Hap.mov";
     string filename = "/Users/ian/Desktop/Hap.mov";
 
     auto ctx = glvideo::GLContext::makeSharedFromCurrent();
@@ -154,7 +138,7 @@ const char *PezInitialize( int width, int height )
         cout << "\tTrack " << i << " type: " << movie->getTrackDescription( i ) << endl;
     }
 
-    movie->play();
+    movie->loop().play();
 
     return "Test Playback";
 }

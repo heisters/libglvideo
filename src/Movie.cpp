@@ -39,14 +39,21 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
     while ( item ) {
         auto track = item->GetData();
         m_trackIndexMap[index++] = track->GetId();
+
         if ( track->GetType() == AP4_Track::TYPE_VIDEO ) {
-            m_width = max( m_width, (uint32_t) ((double) track->GetWidth() / double( 1 << 16 )));
-            m_height = max( m_height, (uint32_t) ((double) track->GetHeight() / double( 1 << 16 )));
-            m_fps = decltype( m_fps )(
-                    max( m_fps.count(), (float) 1000 * track->GetSampleCount() / (float) track->GetDurationMs()));
-            m_codec = getTrackCodec( track );
-            m_videoTrack = track;
+
+			if ( m_videoTrack != nullptr ) {
+				throw Error( "found two video tracks in " + filename + ". I'm confused." );
+			}
+			m_videoTrack = track;
+
+            m_width = (uint32_t) ((double)m_videoTrack->GetWidth() / double( 1 << 16 ) );
+            m_height = (uint32_t) ((double)m_videoTrack->GetHeight() / double( 1 << 16 ) );
+			m_numSamples = m_videoTrack->GetSampleCount();
+            m_fps = decltype( m_fps )( (float) 1000 * m_numSamples / (float)m_videoTrack->GetDurationMs() );
+            m_codec = getTrackCodec( m_videoTrack );
         }
+
         item = item->GetNext();
     }
 
@@ -132,20 +139,22 @@ TrackDescription Movie::getTrackDescription( size_t index ) const
     return TrackDescription( m_file->GetMovie()->GetTrack( id )->GetType(), getTrackCodec( index ));
 }
 
-void Movie::play()
+Movie & Movie::play()
 {
     m_isPlaying = true;
     m_readThread = thread( bind( &Movie::read, this, m_texContext ));
+	return *this;
 }
 
-void Movie::stop()
+Movie & Movie::stop()
 {
     m_isPlaying = false;
+	return *this;
 }
 
-void Movie::pause()
+Movie & Movie::pause()
 {
-
+	return *this;
 }
 
 void Movie::read( GLContext::ref context )
@@ -160,11 +169,14 @@ void Movie::read( GLContext::ref context )
 
         // decode
 
-        if ( mt_frameBuffer.size() < mt_frameBufferSize ) {
+        if ( mt_frameBuffer.size() < mt_frameBufferSize && mt_sample < m_numSamples ) {
 
-            auto frame = getFrame( m_videoTrack, mt_sample++ );
-            mt_frameBuffer.push_back( frame );
-        }
+            auto frame = getFrame( m_videoTrack, mt_sample );
+			mt_frameBuffer.push_back( frame );
+
+			mt_sample++;
+			if ( m_loop ) mt_sample = mt_sample % m_numSamples;
+		}
 
 
         // queue

@@ -96,16 +96,19 @@ public:
     uint32_t getHeight() const { return m_height; }
 
     /// Starts playing the movie.
-    void play();
+    Movie & play();
 
     /// Is the movie playing?
     bool isPlaying() const { return m_isPlaying; }
 
     /// Stops playing the movie, terminating the read thread.
-    void stop();
+    Movie & stop();
 
     /// Pauses playing the movie, but leaves the read thread running. Same as setting the playback rate to 0.
-    void pause();
+    Movie & pause();
+
+	/// Set whether the movie should automatically loop when it reaches the end (chainable).
+	Movie & loop( bool loop = true ) { m_loop = loop; return *this; }
 
     /// Returns the current Frame.
     Frame::ref getCurrentFrame() const;
@@ -125,6 +128,7 @@ private:
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     std::string m_codec;
+	size_t m_numSamples = 0;
 
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.
@@ -137,6 +141,7 @@ private:
 
     std::thread m_readThread;
     std::atomic_bool m_isPlaying{false};
+	std::atomic_bool m_loop{ false };
 
     /// Non-threadsafe member variables (for use only within their threads)
 
