@@ -15,6 +15,14 @@ control their entire video workflow. Compared to other video players, libglvideo
 * support for containers other than MP4/MOV
 * support for most codecs, especially codecs that do inter-frame compression
 
+Platform Support
+----------------
+
+Tested on:
+
+* OS X 10.11 (x86_64)
+* Windows 10 (x64)
+
 Codec Support
 -------------
 
@@ -39,6 +47,8 @@ cd build
 cmake ../
 make
 ```
+
+or maybe use `cmake .. -G "Visual Studio 14 2015 Win64"` if you're on Windows.
 
 License
 -------
