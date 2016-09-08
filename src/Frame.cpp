@@ -1,7 +1,6 @@
 #include <iostream>
 #include "Frame.h"
 #include "gl_includes.h"
-//#include <glew.h>
 
 using namespace glvideo;
 
