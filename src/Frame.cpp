@@ -30,8 +30,7 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, Format format 
             glCompressedTexImage2D( m_target, 0, format.internalFormat(), format.width(), format.height(), 0, imageSize, data );
             glHint( GL_TEXTURE_COMPRESSION_HINT, GL_NICEST );
         } else {
-            glTexImage2D( m_target, 0, format.internalFormat(), format.width(), format.height(), 0, format.format(),
-                          GL_UNSIGNED_BYTE, data );
+            glTexImage2D( m_target, 0, format.internalFormat(), format.width(), format.height(), 0, format.format(), GL_UNSIGNED_BYTE, data );
         }
         glTexParameteri( m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
         glTexParameteri( m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );

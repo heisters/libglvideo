@@ -141,14 +141,21 @@ TrackDescription Movie::getTrackDescription( size_t index ) const
 
 Movie & Movie::play()
 {
+	if ( m_isPlaying ) return *this;
+
+
     m_isPlaying = true;
-    m_readThread = thread( bind( &Movie::read, this, m_texContext ));
+	m_readThread = thread( bind( &Movie::read, this, m_texContext ) );
 	return *this;
 }
 
 Movie & Movie::stop()
 {
     m_isPlaying = false;
+	
+	if ( m_readThread.joinable() ) m_readThread.join();
+	mt_frameBuffer.clear();
+
 	return *this;
 }
 
@@ -172,10 +179,12 @@ void Movie::read( GLContext::ref context )
         if ( mt_frameBuffer.size() < mt_frameBufferSize && m_sample < m_numSamples ) {
 
             auto frame = getFrame( m_videoTrack, m_sample );
-			mt_frameBuffer.push_back( frame );
+			if ( frame ) {
+				mt_frameBuffer.push_back( frame );
 
-			m_sample++;
-			if ( m_loop ) m_sample = m_sample % m_numSamples;
+				m_sample++;
+				if ( m_loop ) m_sample = m_sample % m_numSamples;
+			}
 		}
 
 

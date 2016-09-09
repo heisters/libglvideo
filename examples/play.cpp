@@ -4,6 +4,7 @@
 #include <glew.h>
 #include <iomanip>
 #include <chrono>
+#include <sstream>
 #include "glvideo.h"
 #include "Movie.h"
 
@@ -50,6 +51,9 @@ void main()
 
 
 glvideo::Movie::ref movie;
+// it is necessary to maintain a pointer to the current frame, so that the
+// reading thread doesn't discard the frame's texture before you are ready.
+glvideo::Frame::ref frame = nullptr;
 
 static void BuildGeometry( float aspect );
 
@@ -81,6 +85,9 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         double fps = 1000.0 / avg;
         cout << "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" << endl;
         lastReportTime = now;
+
+		if ( movie->isPlaying() ) movie->stop();
+		else movie->play();
     }
 }
 
@@ -100,6 +107,9 @@ void checkGlError()
 		}
 
 		cerr << "GL_" << error.c_str() << endl;
+#if defined( GLVIDEO_MSW )
+		OutputDebugString( ( "GL Error: GL_" + error ).c_str() );
+#endif
 		err = glGetError();
 	}
 }
@@ -109,12 +119,13 @@ void PezRender()
 	glClear( GL_COLOR_BUFFER_BIT );
 
     glActiveTexture( GL_TEXTURE0 );
-    auto frame = movie->getCurrentFrame();
+    frame = movie->getCurrentFrame();
     if ( frame ) {
-        glBindTexture( frame->getTextureTarget(), frame->getTextureId());
-    }
+        glBindTexture( frame->getTextureTarget(), frame->getTextureId() );
+		glDrawArrays( GL_TRIANGLES, 0, 6 );
+	}
 
-    glDrawArrays( GL_TRIANGLES, 0, 6 );
+	checkGlError();
 }
 
 const char *PezInitialize( int width, int height )
