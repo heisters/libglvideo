@@ -5,11 +5,11 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <condition_variable>
 #include "Frame.h"
 #include "TrackDescription.h"
-#include "GLContext.h"
+#include "Context.h"
 #include "Decoder.h"
-#include "concurrency.h"
 
 class AP4_File;
 class AP4_Track;
@@ -55,9 +55,9 @@ public:
 
     /// Returns a ref to a movie constructed from a source \a filename.
     static ref
-    create( const GLContext::ref &texContext, const std::string &filename, const Options &options = Options())
+    create( const Context::ref &context, const std::string &filename, const Options &options = Options() )
     {
-        return ref( new Movie( texContext, filename, options ));
+        return ref( new Movie( context, filename, options ));
     }
 
     /// Constructs a movie from a \a texContext, and a source \a filename.
@@ -66,7 +66,7 @@ public:
     /// @param  filename    the filename to read from.
     ///
     /// \throws Error if the file cannot be read
-    Movie( const GLContext::ref &texContext, const std::string &filename, const Options &options = Options());
+    Movie( const Context::ref &context, const std::string &filename, const Options &options = Options() );
 
     ~Movie();
 
@@ -124,7 +124,7 @@ private:
     std::map<size_t, uint32_t> m_trackIndexMap;
     Options m_options;
     Frame::ref m_currentFrame = nullptr;
-    GLContext::ref m_texContext = nullptr;
+    Context::ref m_context = nullptr;
     AP4_Track * m_videoTrack = nullptr;
     std::chrono::duration< float > m_fps;
     uint32_t m_width = 0;
@@ -138,11 +138,15 @@ private:
     std::unique_ptr< Decoder > m_decoder;
 
     /// Reads frames into the frame buffer on a thread, and queues them.
-    void read( GLContext::ref context );
+	void queueRead();
+	void read( GLContext::ref context );
+	void onFrameRead( const Frame::ref & frame );
+	void waitForJobsToFinish();
 
-
-    std::thread m_readThread;
-    std::atomic_bool m_isPlaying{false};
+	std::atomic_bool m_isPlaying{ false };
+	std::atomic_bool m_jobsPending{ false };
+	std::condition_variable m_jobsPendingCV;
+	std::mutex m_jobsMutex;
 	std::atomic_bool m_loop{ false };
 	std::atomic< size_t > m_sample{ 0 };
 

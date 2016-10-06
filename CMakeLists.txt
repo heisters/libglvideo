@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.6)
 project(glvideo)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+if(WIN32)
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} /MTd")
+endif()
 
 
 # AP4
@@ -89,12 +92,15 @@ set(SOURCE_FILES
         lib/hap/source/hap.h
         include/glvideo.h
         include/gl_includes.h
+        include/concurrency.h
         src/Frame.cpp
         include/Frame.h
         src/Movie.cpp
         include/Movie.h
         src/TrackDescription.cpp
         include/TrackDescription.h
+	src/Context.cpp
+	include/Context.h
         src/GLContext.cpp
         include/GLContext.h
         src/Decoder.cpp

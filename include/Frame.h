@@ -1,7 +1,7 @@
 #pragma once
 
-#include "gl_includes.h"
 #include <memory>
+#include "gl_includes.h"
 
 namespace glvideo {
 

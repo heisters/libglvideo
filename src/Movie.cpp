@@ -10,8 +10,8 @@ using namespace std;
 using namespace glvideo;
 
 
-Movie::Movie( const GLContext::ref &texContext, const string &filename, const Options &options ) :
-        m_texContext( texContext ),
+Movie::Movie( const Context::ref &context, const string &filename, const Options &options ) :
+        m_context( context ),
         m_options( options ),
         mt_frameBufferSize( options.bufferSize())
 {
@@ -84,8 +84,7 @@ Movie::Movie( const GLContext::ref &texContext, const string &filename, const Op
 
 Movie::~Movie()
 {
-    if ( isPlaying()) stop();
-    if ( m_readThread.joinable()) m_readThread.join();
+    if ( isPlaying() || m_jobsPending ) stop();
 }
 
 string Movie::getFormat() const
@@ -144,16 +143,18 @@ Movie & Movie::play()
 	if ( m_isPlaying ) return *this;
 
 
-    m_isPlaying = true;
-	m_readThread = thread( bind( &Movie::read, this, m_texContext ) );
+	mt_lastFrameQueuedAt = clock::now();
+	m_isPlaying = true;
+	queueRead();
+
 	return *this;
 }
 
 Movie & Movie::stop()
 {
     m_isPlaying = false;
-	
-	if ( m_readThread.joinable() ) m_readThread.join();
+	waitForJobsToFinish();
+
 	mt_frameBuffer.clear();
 
 	return *this;
@@ -164,39 +165,59 @@ Movie & Movie::pause()
 	return *this;
 }
 
+void Movie::queueRead()
+{
+	m_jobsPending = true;
+	m_context->queueJob( bind( &Movie::read, this, placeholders::_1 ) );
+}
+
 void Movie::read( GLContext::ref context )
 {
-    context->makeCurrent();
-    mt_lastFrameQueuedAt = clock::now();
+	context->makeCurrent();
 
-    while ( m_isPlaying ) {
-        const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
-        const auto nextFrameTime = mt_lastFrameQueuedAt + spf;
+	const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
+	const auto nextFrameTime = mt_lastFrameQueuedAt + spf;
 
 
-        // decode
+	// decode
 
-        if ( mt_frameBuffer.size() < mt_frameBufferSize && m_sample < m_numSamples ) {
+	if ( mt_frameBuffer.size() < mt_frameBufferSize && m_sample < m_numSamples ) {
 
-            auto frame = getFrame( m_videoTrack, m_sample );
-			if ( frame ) {
-				mt_frameBuffer.push_back( frame );
+		auto frame = getFrame( m_videoTrack, m_sample );
+		if ( frame ) {
+			mt_frameBuffer.push_back( frame );
 
-				m_sample++;
-				if ( m_loop ) m_sample = m_sample % m_numSamples;
-			}
+			m_sample++;
+			if ( m_loop ) m_sample = m_sample % m_numSamples;
 		}
+	}
 
 
-        // queue
+	// queue
 
-        if ( clock::now() >= nextFrameTime && ! mt_frameBuffer.empty() ) {
+	if ( clock::now() >= nextFrameTime && ! mt_frameBuffer.empty() ) {
 
-            m_currentFrame = mt_frameBuffer.front();
-            mt_frameBuffer.pop_front();
-            mt_lastFrameQueuedAt = clock::now();
-        }
-    }
+		m_currentFrame = mt_frameBuffer.front();
+		mt_frameBuffer.pop_front();
+		mt_lastFrameQueuedAt = clock::now();
+	}
+
+
+	if ( m_isPlaying ) {
+		queueRead();
+	}
+	else {
+		m_jobsPending = false;
+		m_jobsPendingCV.notify_one();
+	}
+}
+
+void Movie::waitForJobsToFinish()
+{
+	if ( m_jobsPending ) {
+		unique_lock< mutex > lock( m_jobsMutex );
+		m_jobsPendingCV.wait( lock, [&] { return ! m_jobsPending; } );
+	}
 }
 
 Frame::ref Movie::getCurrentFrame() const

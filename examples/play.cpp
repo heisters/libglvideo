@@ -6,7 +6,6 @@
 #include <chrono>
 #include <sstream>
 #include "glvideo.h"
-#include "Movie.h"
 
 using namespace std;
 
@@ -51,6 +50,7 @@ void main()
 
 
 glvideo::Movie::ref movie;
+glvideo::Context::ref context;
 // it is necessary to maintain a pointer to the current frame, so that the
 // reading thread doesn't discard the frame's texture before you are ready.
 glvideo::Frame::ref frame = nullptr;
@@ -133,8 +133,8 @@ const char *PezInitialize( int width, int height )
 //    string filename = "/Users/ian/Desktop/MJPEG.mov";
     string filename = "/Users/ian/Desktop/Hap.mov";
 
-    auto ctx = glvideo::GLContext::makeSharedFromCurrent();
-    movie = glvideo::Movie::create( ctx, filename );
+	context = glvideo::Context::create( 2 );
+    movie = glvideo::Movie::create( context, filename );
 
 
     BuildGeometry((float) width / (float) height );

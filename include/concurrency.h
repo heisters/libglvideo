@@ -54,7 +54,7 @@ public:
 
     void wait_and_pop( Data *popped_value )
     {
-        std::lock_guard<std::mutex> lock( m_mutex );
+        std::unique_lock<std::mutex> lock( m_mutex );
         while ( m_queue.empty()) {
             m_cv.wait( lock );
         }
