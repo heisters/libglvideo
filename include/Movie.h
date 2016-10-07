@@ -10,6 +10,7 @@
 #include "TrackDescription.h"
 #include "Context.h"
 #include "Decoder.h"
+#include "concurrency.h"
 
 class AP4_File;
 class AP4_Track;
@@ -23,6 +24,11 @@ typedef double seconds;
 class UnsupportedCodecError : public std::runtime_error {
 public:
     UnsupportedCodecError( const std::string &what ) : std::runtime_error( what ) {}
+};
+
+struct FrameAndMetdata {
+	size_t sample;
+	Frame::ref frame;
 };
 
 /// \class Movie
@@ -85,6 +91,9 @@ public:
     /// Returns the length of the movie in seconds.
     seconds getDuration() const;
 
+	/// Returns the remaining amount of time in seconds.
+	seconds getRemainingTime() const;
+
     /// Returns the framerate
     float getFramerate() const { return m_fps.count(); }
 
@@ -110,10 +119,10 @@ public:
 	Movie & loop( bool loop = true ) { m_loop = loop; return *this; }
 
 	/// Set the playhead to the beginning of the video.
-	Movie & seekToStart() { m_sample = 0; return *this; }
+	Movie & seekToStart() { m_readSample = 0; return *this; }
 
     /// Returns the current Frame.
-    Frame::ref getCurrentFrame() const;
+    Frame::ref getCurrentFrame();
 
 private:
     std::string getTrackCodec( size_t index ) const;
@@ -131,16 +140,16 @@ private:
     uint32_t m_height = 0;
     std::string m_codec;
 	size_t m_numSamples = 0;
+	size_t m_currentSample = 0;
 
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.
-    Frame::ref getFrame( AP4_Track * track, size_t i_sample ) const;
+    FrameAndMetdata getFrame( AP4_Track * track, size_t i_sample ) const;
     std::unique_ptr< Decoder > m_decoder;
 
     /// Reads frames into the frame buffer on a thread, and queues them.
 	void queueRead();
 	void read( GLContext::ref context );
-	void onFrameRead( const Frame::ref & frame );
 	void waitForJobsToFinish();
 
 	std::atomic_bool m_isPlaying{ false };
@@ -148,12 +157,8 @@ private:
 	std::condition_variable m_jobsPendingCV;
 	std::mutex m_jobsMutex;
 	std::atomic_bool m_loop{ false };
-	std::atomic< size_t > m_sample{ 0 };
-
-    /// Non-threadsafe member variables (for use only within their threads)
-
-    clock::time_point mt_lastFrameQueuedAt;
-    std::deque< Frame::ref > mt_frameBuffer;
-    size_t mt_frameBufferSize;
+	std::atomic< size_t > m_readSample{ 0 };
+	concurrent_buffer< FrameAndMetdata > m_frameBuffer;
+	clock::time_point m_lastFrameQueuedAt;
 };
 }

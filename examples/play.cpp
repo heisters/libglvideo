@@ -51,9 +51,6 @@ void main()
 
 glvideo::Movie::ref movie;
 glvideo::Context::ref context;
-// it is necessary to maintain a pointer to the current frame, so that the
-// reading thread doesn't discard the frame's texture before you are ready.
-glvideo::Frame::ref frame = nullptr;
 
 static void BuildGeometry( float aspect );
 
@@ -119,7 +116,7 @@ void PezRender()
 	glClear( GL_COLOR_BUFFER_BIT );
 
     glActiveTexture( GL_TEXTURE0 );
-    frame = movie->getCurrentFrame();
+    auto frame = movie->getCurrentFrame();
     if ( frame ) {
         glBindTexture( frame->getTextureTarget(), frame->getTextureId() );
 		glDrawArrays( GL_TRIANGLES, 0, 6 );

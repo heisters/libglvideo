@@ -79,6 +79,14 @@ public:
         std::lock_guard<std::mutex> lock( this->m_mutex );
         return this->m_queue.size() >= m_maxSize;
     }
+
+	void clear()
+	{
+		std::lock_guard<std::mutex> lock( this->m_mutex );
+
+		std::queue< Data > empty;
+		std::swap( this->m_queue, empty );
+	}
 };
 
 }

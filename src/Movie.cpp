@@ -5,15 +5,15 @@
 #include "decoders/jpeg.h"
 #include "decoders/hap.h"
 
-
 using namespace std;
 using namespace glvideo;
 
 
+
 Movie::Movie( const Context::ref &context, const string &filename, const Options &options ) :
-        m_context( context ),
-        m_options( options ),
-        mt_frameBufferSize( options.bufferSize())
+	m_context( context ),
+	m_options( options ),
+	m_frameBuffer( options.bufferSize() )
 {
     AP4_Result result;
     AP4_ByteStream *input = NULL;
@@ -113,6 +113,11 @@ seconds Movie::getDuration() const
     return (seconds) m_file->GetMovie()->GetDurationMs() / 1000.0;
 }
 
+seconds Movie::getRemainingTime() const
+{
+	return m_currentSample / m_numSamples * getDuration();
+}
+
 std::string Movie::getTrackCodec( size_t index ) const
 {
     auto id = m_trackIndexMap.at( index );
@@ -143,7 +148,7 @@ Movie & Movie::play()
 	if ( m_isPlaying ) return *this;
 
 
-	mt_lastFrameQueuedAt = clock::now();
+	m_lastFrameQueuedAt = clock::now();
 	m_isPlaying = true;
 	queueRead();
 
@@ -155,7 +160,7 @@ Movie & Movie::stop()
     m_isPlaying = false;
 	waitForJobsToFinish();
 
-	mt_frameBuffer.clear();
+	m_frameBuffer.clear();
 
 	return *this;
 }
@@ -175,33 +180,16 @@ void Movie::read( GLContext::ref context )
 {
 	context->makeCurrent();
 
-	const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
-	const auto nextFrameTime = mt_lastFrameQueuedAt + spf;
+	if ( ! m_frameBuffer.is_full() && m_readSample < m_numSamples ) {
 
+		auto frame = getFrame( m_videoTrack, m_readSample );
+		if ( frame.frame ) {
+			m_frameBuffer.push( frame );
 
-	// decode
-
-	if ( mt_frameBuffer.size() < mt_frameBufferSize && m_sample < m_numSamples ) {
-
-		auto frame = getFrame( m_videoTrack, m_sample );
-		if ( frame ) {
-			mt_frameBuffer.push_back( frame );
-
-			m_sample++;
-			if ( m_loop ) m_sample = m_sample % m_numSamples;
+			m_readSample++;
+			if ( m_loop ) m_readSample = m_readSample % m_numSamples;
 		}
 	}
-
-
-	// queue
-
-	if ( clock::now() >= nextFrameTime && ! mt_frameBuffer.empty() ) {
-
-		m_currentFrame = mt_frameBuffer.front();
-		mt_frameBuffer.pop_front();
-		mt_lastFrameQueuedAt = clock::now();
-	}
-
 
 	if ( m_isPlaying ) {
 		queueRead();
@@ -220,26 +208,40 @@ void Movie::waitForJobsToFinish()
 	}
 }
 
-Frame::ref Movie::getCurrentFrame() const
+Frame::ref Movie::getCurrentFrame()
 {
+	{
+		const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
+		const auto nextFrameTime = m_lastFrameQueuedAt + spf;
+
+		if ( clock::now() >= nextFrameTime && ! m_frameBuffer.empty() ) {
+			FrameAndMetdata fm;
+			if ( m_frameBuffer.try_pop( &fm ) && fm.frame ) {
+				m_currentFrame = fm.frame;
+				m_currentSample = fm.sample;
+				m_lastFrameQueuedAt = clock::now();
+			}
+		}
+	}
+
     return m_currentFrame;
 }
 
 
-Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
+FrameAndMetdata Movie::getFrame( AP4_Track *track, size_t i_sample ) const
 {
     AP4_Sample sample;
     AP4_DataBuffer sampleData;
 
 
     if ( AP4_FAILED( track->ReadSample( i_sample, sample, sampleData ))) {
-        return nullptr;
+		return FrameAndMetdata{ 0, nullptr };
     }
 
 
     Frame::ref frame = m_decoder->decode( &sampleData );
 
-    return frame;
+	return FrameAndMetdata{ i_sample, frame };
 }
 
 

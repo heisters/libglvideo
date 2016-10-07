@@ -17,58 +17,28 @@ public:
     public:
         Format() {}
 
-        Format &width( GLsizei w )
-        {
-            m_width = w;
-            return *this;
-        }
-
+        Format &width( GLsizei w ) { m_width = w; return *this; }
         GLsizei &width() { return m_width; }
-
         GLsizei width() const { return m_width; }
 
 
-        Format &height( GLsizei h )
-        {
-            m_height = h;
-            return *this;
-        }
-
+        Format &height( GLsizei h ) { m_height = h; return *this; }
         GLsizei &height() { return m_height; }
-
         GLsizei height() const { return m_height; }
 
 
-        Format &internalFormat( GLenum f )
-        {
-            m_internalFormat = f;
-            return *this;
-        }
-
+        Format &internalFormat( GLenum f ) { m_internalFormat = f; return *this; }
         GLenum &internalFormat() { return m_internalFormat; }
-
         GLenum internalFormat() const { return m_internalFormat; }
 
 
-        Format &format( GLenum f )
-        {
-            m_format = f;
-            return *this;
-        }
-
+        Format &format( GLenum f ) { m_format = f; return *this; }
         GLenum &format() { return m_format; }
-
         GLenum format() const { return m_format; }
 
 
-        Format &compressed( bool c )
-        {
-            m_compressed = c;
-            return *this;
-        }
-
+        Format &compressed( bool c ) { m_compressed = c; return *this; }
         bool &compressed() { return m_compressed; }
-
         bool compressed() const { return m_compressed; }
 
     private:
@@ -93,7 +63,6 @@ public:
     ~Frame();
 
     Frame( Frame const & ) = delete;
-
     Frame &operator=( Frame const & ) = delete;
 
     /// Returns the texture target of the frame. Usually GL_TEXTURE_2D.
