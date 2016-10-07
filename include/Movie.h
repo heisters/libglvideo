@@ -41,18 +41,12 @@ public:
         Options() {}
 
         /// Set the number of \a frames to be buffered by the movie
-        Options &bufferSize( size_t frames )
-        {
-            m_bufferSize = frames;
-            return *this;
-        }
-
+        Options &bufferSize( size_t frames ) { m_bufferSize = frames; return *this; }
         size_t bufferSize() const { return m_bufferSize; }
-
         size_t &bufferSize() { return m_bufferSize; }
 
     private:
-        size_t m_bufferSize = 20;
+        size_t m_bufferSize = 5;
     };
 
 
@@ -119,7 +113,7 @@ public:
 	Movie & loop( bool loop = true ) { m_loop = loop; return *this; }
 
 	/// Set the playhead to the beginning of the video.
-	Movie & seekToStart() { m_readSample = 0; return *this; }
+	Movie & seekToStart() { m_readSample = 0; m_frameBuffer.clear(); return *this; }
 
     /// Returns the current Frame.
     Frame::ref getCurrentFrame();

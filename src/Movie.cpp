@@ -84,7 +84,8 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
 
 Movie::~Movie()
 {
-    if ( isPlaying() || m_jobsPending ) stop();
+    if ( isPlaying() ) stop();
+	if ( m_jobsPending ) waitForJobsToFinish();
 }
 
 string Movie::getFormat() const
@@ -115,7 +116,7 @@ seconds Movie::getDuration() const
 
 seconds Movie::getRemainingTime() const
 {
-	return m_currentSample / m_numSamples * getDuration();
+	return (double)( m_numSamples - m_currentSample ) / (double)m_numSamples * getDuration();
 }
 
 std::string Movie::getTrackCodec( size_t index ) const
@@ -158,9 +159,6 @@ Movie & Movie::play()
 Movie & Movie::stop()
 {
     m_isPlaying = false;
-	waitForJobsToFinish();
-
-	m_frameBuffer.clear();
 
 	return *this;
 }
