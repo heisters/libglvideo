@@ -5,42 +5,47 @@
 #include <iomanip>
 #include <chrono>
 #include <sstream>
+#include <ctime>
+#include <cstdlib>
+#include <math.h>
 #include "glvideo.h"
+#include "debug.h"
 
 using namespace std;
 
 static const std::string VERTEX_SHADER_SOURCE =
-        R"EOF(
-attribute vec2 Position;
-attribute vec2 InCoord;
-varying vec2 OutCoord;
+R"EOF(
+attribute vec2 aPosition;
+attribute vec2 aTexCoord;
+varying vec2 vTexCoord;
+uniform mat4 uModelMatrix;
 
 void main()
 {
-    OutCoord = InCoord;
-    gl_Position = vec4(Position, 0, 1);
+    vTexCoord = aTexCoord;
+    gl_Position = uModelMatrix * vec4(aPosition, 0, 1);
 }
 )EOF";
 
 static const std::string FRAGMENT_SHADER_SOURCE =
 R"EOF(
-varying vec2 OutCoord;
+varying vec2 vTexCoord;
 uniform sampler2D Sampler;
 
 void main()
 {
-   gl_FragColor = texture2D(Sampler, OutCoord);
+   gl_FragColor = texture2D(Sampler, vTexCoord);
 }
 )EOF";
 
 static const std::string YCoCg_FRAGMENT_SHADER_SOURCE =
-        R"EOF(
-varying vec2 OutCoord;
+R"EOF(
+varying vec2 vTexCoord;
 uniform sampler2D Sampler;
 
 void main()
 {
-    vec4 color = texture2D(Sampler, OutCoord);
+    vec4 color = texture2D(Sampler, vTexCoord);
     float Co = color.x - ( 0.5 * 256.0 / 255.0 );
     float Cg = color.y - ( 0.5 * 256.0 / 255.0 );
     float Y = color.w;
@@ -49,21 +54,26 @@ void main()
 )EOF";
 
 
-glvideo::Movie::ref movie;
+const float COORD_EXTENTS = 1.f;
+const int NUM_MOVIES = 16;
+std::vector< glvideo::Movie::ref > movies;
 glvideo::Context::ref context;
 
 static void BuildGeometry( float aspect );
 
-static void LoadEffect( bool isYCoCg = false );
+static GLuint LoadEffect( bool isYCoCg = false );
 
 deque<unsigned int> frameTimes;
 static unsigned int sumElapsedMilliseconds = 0;
 typedef chrono::high_resolution_clock hrclock;
 static hrclock::time_point lastReportTime = hrclock::now();
+GLuint shader;
 
 enum {
     PositionSlot, TexCoordSlot
 };
+
+float randf() { return static_cast< float >( rand() ) / static_cast< float >( RAND_MAX ); }
 
 void PezHandleMouse( int x, int y, int action ) {}
 
@@ -80,8 +90,13 @@ void PezUpdate( unsigned int elapsedMilliseconds )
     if ( chrono::duration_cast<chrono::seconds>( now - lastReportTime ).count() > 1 ) {
         double avg = (double) sumElapsedMilliseconds / (double) frameTimes.size();
         double fps = 1000.0 / avg;
-        cout << "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" << endl;
+        DBOUT( "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" );
         lastReportTime = now;
+
+		for ( auto & movie : movies ) {
+			if ( movie->isPlaying() && randf() < 0.5f ) movie->stop();
+			else if ( ! movie->isPlaying() && randf() < 0.75f ) movie->play();
+		}
     }
 }
 
@@ -100,10 +115,7 @@ void checkGlError()
 		case GL_INVALID_FRAMEBUFFER_OPERATION:  error = "INVALID_FRAMEBUFFER_OPERATION";  break;
 		}
 
-		cerr << "GL_" << error.c_str() << endl;
-#if defined( GLVIDEO_MSW )
-		OutputDebugString( ( "GL Error: GL_" + error ).c_str() );
-#endif
+		DBOUT( "GL_" << error.c_str() );
 		err = glGetError();
 	}
 }
@@ -113,10 +125,36 @@ void PezRender()
 	glClear( GL_COLOR_BUFFER_BIT );
 
     glActiveTexture( GL_TEXTURE0 );
-    auto frame = movie->getCurrentFrame();
-    if ( frame ) {
-        glBindTexture( frame->getTextureTarget(), frame->getTextureId() );
-		glDrawArrays( GL_TRIANGLES, 0, 6 );
+
+
+	int n = sqrt( movies.size() );
+	float size = COORD_EXTENTS / (float)n;
+	int i = 0;
+	for ( auto & movie : movies ) {
+		auto frame = movie->getCurrentFrame();
+		if ( frame ) {
+			float x = -COORD_EXTENTS + size * 2.f * (float)( i % n ) + size;
+			float y = COORD_EXTENTS - size * 2.f * (float)( (int)( i / n ) ) - size;
+			float s[ 3 ] = { size, size, 1.f };
+			float tx[ 3 ] = { x, y, 0.f };
+			float mtx[ 16 ] = {
+				s[ 0 ],		0.f,		0.f,		0.f,
+				0.f,		s[ 1 ],		0.f,		0.f,
+				0.f,		0.f,		s[ 2 ],		0.f,
+				tx[ 0 ],	tx[ 1 ],	tx[ 2 ],	1.f
+			};
+			GLint loc = glGetUniformLocation( shader, "uModelMatrix" );
+			glUniformMatrix4fv( loc, 1, GL_FALSE, mtx );
+
+			glBindTexture( frame->getTextureTarget(), frame->getTextureId() );
+			glDrawArrays( GL_TRIANGLES, 0, 6 );
+			glBindTexture( frame->getTextureTarget(), 0 );
+		}
+		else {
+			DBOUT( "NO FRAME!" );
+		}
+
+		++i;
 	}
 
 	checkGlError();
@@ -126,24 +164,28 @@ const char *PezInitialize( int width, int height )
 {
 //    string filename = "/Users/ian/Desktop/MJPEG.mov";
     string filename = "/Users/ian/Desktop/Hap.mov";
+	srand( static_cast< unsigned >( time( 0 ) ) );
 
-	context = glvideo::Context::create( 2 );
-    movie = glvideo::Movie::create( context, filename );
+	context = glvideo::Context::create( 8 );
+	for ( int i = 0; i < NUM_MOVIES; ++i ) {
+		auto movie = glvideo::Movie::create( context, filename );
+		movies.push_back( movie );
 
+		DBOUT( "Format: " << movie->getFormat() );
+		DBOUT( "Duration (seconds): " << movie->getDuration() );
+		DBOUT( "Size: " << movie->getWidth() << "x" << movie->getHeight() );
+		DBOUT( "Framerate: " << movie->getFramerate() );
+		DBOUT( "Number of tracks: " << movie->getNumTracks() );
+		for ( int i = 0; i < movie->getNumTracks(); ++i ) {
+			DBOUT( "\tTrack " << i << " type: " << movie->getTrackDescription( i ) );
+		}
+
+		movie->loop().play();
+	}
 
     BuildGeometry((float) width / (float) height );
-	LoadEffect( movie->getCodec() == "HapY" );
+	shader = LoadEffect( movies[0]->getCodec() == "HapY" );
 
-    cout << "Format: " << movie->getFormat() << endl;
-    cout << "Duration (seconds): " << movie->getDuration() << endl;
-    cout << "Size: " << movie->getWidth() << "x" << movie->getHeight() << endl;
-    cout << "Framerate: " << movie->getFramerate() << endl;
-    cout << "Number of tracks: " << movie->getNumTracks() << endl;
-    for ( int i = 0; i < movie->getNumTracks(); ++i ) {
-        cout << "\tTrack " << i << " type: " << movie->getTrackDescription( i ) << endl;
-    }
-
-    movie->loop().play();
 
     return "Test Playback";
 }
@@ -151,8 +193,8 @@ const char *PezInitialize( int width, int height )
 
 static void BuildGeometry( float aspect )
 {
-    float X = 1.f;
-    float Y = 1.f;
+    float X = COORD_EXTENTS;
+    float Y = COORD_EXTENTS;
     float verts[] = {
             -X, -Y, 0, 1,
             -X, +Y, 0, 0,
@@ -183,7 +225,7 @@ static void BuildGeometry( float aspect )
 	glEnableVertexAttribArray( TexCoordSlot );
 }
 
-static void LoadEffect( bool isYCoCg )
+static GLuint LoadEffect( bool isYCoCg )
 {
     const char *vsSource = VERTEX_SHADER_SOURCE.c_str();
     const char *fsSource;
@@ -215,8 +257,8 @@ static void LoadEffect( bool isYCoCg )
     programHandle = glCreateProgram();
     glAttachShader( programHandle, vsHandle );
     glAttachShader( programHandle, fsHandle );
-    glBindAttribLocation( programHandle, PositionSlot, "Position" );
-    glBindAttribLocation( programHandle, TexCoordSlot, "InCoord" );
+    glBindAttribLocation( programHandle, PositionSlot, "aPosition" );
+    glBindAttribLocation( programHandle, TexCoordSlot, "aTexCoord" );
     glLinkProgram( programHandle );
     glGetProgramiv( programHandle, GL_LINK_STATUS, &linkSuccess );
     glGetProgramInfoLog( programHandle, sizeof( compilerSpew ), 0, compilerSpew );
@@ -226,4 +268,6 @@ static void LoadEffect( bool isYCoCg )
 
     GLint loc = glGetUniformLocation( programHandle, "Sampler" );
     glUniform1i( loc, 0 );
+
+	return programHandle;
 }

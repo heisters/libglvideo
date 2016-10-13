@@ -166,3 +166,11 @@ else()
 	add_executable(play examples/play.cpp)
 endif()
 target_link_libraries(play glvideo PezEcosystem ${PLATFORM_LIBS})
+
+## stress test
+if(WIN32)
+	add_executable(stress WIN32 examples/stress.cpp)
+else()
+	add_executable(stress examples/stress.cpp)
+endif()
+target_link_libraries(stress glvideo PezEcosystem ${PLATFORM_LIBS})
