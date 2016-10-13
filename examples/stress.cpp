@@ -128,14 +128,14 @@ void PezRender()
 
 
 	int n = sqrt( movies.size() );
-	float size = COORD_EXTENTS / (float)n;
+	float size = COORD_EXTENTS * 2.f / (float)n;
 	int i = 0;
 	for ( auto & movie : movies ) {
 		auto frame = movie->getCurrentFrame();
 		if ( frame ) {
-			float x = -COORD_EXTENTS + size * 2.f * (float)( i % n ) + size;
-			float y = COORD_EXTENTS - size * 2.f * (float)( (int)( i / n ) ) - size;
-			float s[ 3 ] = { size, size, 1.f };
+			float x = -COORD_EXTENTS + size * (float)( i % n ) + size * 0.5f;
+			float y = COORD_EXTENTS - size * (float)( (int)( i / n ) ) - size * 0.5f;
+			float s[ 3 ] = { size * 0.5f, size * 0.5f, 1.f };
 			float tx[ 3 ] = { x, y, 0.f };
 			float mtx[ 16 ] = {
 				s[ 0 ],		0.f,		0.f,		0.f,
