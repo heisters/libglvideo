@@ -40,13 +40,14 @@ public:
     public:
         Options() {}
 
-        /// Set the number of \a frames to be buffered by the movie
+        /// Set the number of \a frames to be buffered by the movie. Higher
+		/// values result in smoother playback, but use more memory.
         Options &bufferSize( size_t frames ) { m_bufferSize = frames; return *this; }
         size_t bufferSize() const { return m_bufferSize; }
         size_t &bufferSize() { return m_bufferSize; }
 
     private:
-        size_t m_bufferSize = 5;
+        size_t m_bufferSize = 10;
     };
 
 

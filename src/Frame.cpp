@@ -25,7 +25,6 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, Format format 
         glEnable( m_target );
         glGenTextures( 1, &m_tex );
 		glBindTexture( m_target, m_tex );
-
         if ( format.compressed() ) {
             glCompressedTexImage2D( m_target, 0, format.internalFormat(), format.width(), format.height(), 0, imageSize, data );
             glHint( GL_TEXTURE_COMPRESSION_HINT, GL_NICEST );
