@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.6)
+
 project(glvideo)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-if(WIN32)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} /MTd")
+if(MSVC)
+	string(REPLACE "/MD " "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+	string(REPLACE "/MD " "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+	string(REPLACE "/MDd " "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
-
 
 # AP4
 
@@ -56,7 +61,7 @@ else()
 	set(ac_cv_have_sys_uio_h 0)
 endif()
 
-if(WIN32)
+if(MSVC)
     add_definitions(-DHAVE_WINDOWS_H)
 endif()
 
@@ -114,7 +119,7 @@ set(SOURCE_FILES
 add_library(glvideo STATIC ${SOURCE_FILES})
 target_link_libraries(glvideo ${EXTRA_LIBS})
 
-if(WIN32)
+if(MSVC)
 	#get_target_property(FLAGS glvideo COMPILE_FLAGS)
 	#set_target_properties(glvideo PROPERTIES COMPILE_FLAGS "${FLAGS} /FI\"snappy-win.h\"") # add more headers with /FI\"${ForcedHeader_B}\"
 	set_target_properties(glvideo PROPERTIES COMPILE_FLAGS "/FI\"snappy-win.h\"") # add more headers with /FI\"${ForcedHeader_B}\"
@@ -132,7 +137,7 @@ include_directories(
 add_subdirectory(lib/pez EXCLUDE_FROM_ALL)
 
 
-IF (WIN32)
+IF (MSVC)
 
     add_definitions(-DGLEW_STATIC)
     add_definitions(-DOPENCTM_STATIC)
@@ -160,7 +165,7 @@ ENDIF ()
 
 ## play
 
-if(WIN32)
+if(MSVC)
 	add_executable(play WIN32 examples/play.cpp)
 else()
 	add_executable(play examples/play.cpp)
@@ -168,7 +173,7 @@ endif()
 target_link_libraries(play glvideo PezEcosystem ${PLATFORM_LIBS})
 
 ## stress test
-if(WIN32)
+if(MSVC)
 	add_executable(stress WIN32 examples/stress.cpp)
 else()
 	add_executable(stress examples/stress.cpp)
