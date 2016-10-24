@@ -27,7 +27,7 @@ private:
 	GLContext::ref m_glContext = nullptr;
 	concurrent_queue< context_job > & m_queue;
 	std::thread m_thread;
-	std::atomic_bool m_doWork = false;
+	std::atomic_bool m_doWork{false};
 };
 
 class Context
