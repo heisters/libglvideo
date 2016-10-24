@@ -26,11 +26,6 @@ public:
     UnsupportedCodecError( const std::string &what ) : std::runtime_error( what ) {}
 };
 
-struct FrameAndMetdata {
-	size_t sample;
-	Frame::ref frame;
-};
-
 /// \class Movie
 /// \brief Plays a movie from a file.
 class Movie {
@@ -117,7 +112,7 @@ public:
 	Movie & seekToStart() { m_readSample = 0; m_frameBuffer.clear(); return *this; }
 
     /// Returns the current Frame.
-    Frame::ref getCurrentFrame();
+    FrameTexture::ref getCurrentFrame();
 
 private:
     std::string getTrackCodec( size_t index ) const;
@@ -127,7 +122,7 @@ private:
     AP4_File *m_file = NULL;
     std::map<size_t, uint32_t> m_trackIndexMap;
     Options m_options;
-    Frame::ref m_currentFrame = nullptr;
+    FrameTexture::ref m_currentFrame = nullptr;
     Context::ref m_context = nullptr;
     AP4_Track * m_videoTrack = nullptr;
     std::chrono::duration< float > m_fps;
@@ -139,7 +134,7 @@ private:
 
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.
-    FrameAndMetdata getFrame( AP4_Track * track, size_t i_sample ) const;
+    Frame::ref getFrame( AP4_Track * track, size_t i_sample ) const;
     std::unique_ptr< Decoder > m_decoder;
 
     /// Reads frames into the frame buffer on a thread, and queues them.
@@ -153,7 +148,7 @@ private:
 	std::mutex m_jobsMutex;
 	std::atomic_bool m_loop{ false };
 	std::atomic< size_t > m_readSample{ 0 };
-	concurrent_buffer< FrameAndMetdata > m_frameBuffer;
+	concurrent_buffer< Frame::ref > m_frameBuffer;
 	clock::time_point m_lastFrameQueuedAt;
 };
 }

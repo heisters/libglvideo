@@ -181,7 +181,7 @@ void Movie::read( GLContext::ref context )
 	if ( ! m_frameBuffer.is_full() && m_readSample < m_numSamples ) {
 
 		auto frame = getFrame( m_videoTrack, m_readSample );
-		if ( frame.frame ) {
+		if ( frame->hasTexture() ) {
 			m_frameBuffer.push( frame );
 
 			m_readSample++;
@@ -206,18 +206,19 @@ void Movie::waitForJobsToFinish()
 	}
 }
 
-Frame::ref Movie::getCurrentFrame()
+FrameTexture::ref Movie::getCurrentFrame()
 {
 	{
 		const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
 		const auto nextFrameTime = m_lastFrameQueuedAt + spf;
 
-		if ( clock::now() >= nextFrameTime && ! m_frameBuffer.empty() ) {
-			FrameAndMetdata fm;
-			if ( m_frameBuffer.try_pop( &fm ) && fm.frame ) {
-				m_currentFrame = fm.frame;
-				m_currentSample = fm.sample;
-				m_lastFrameQueuedAt = clock::now();
+        auto now = clock::now();
+		if ( now >= nextFrameTime && ! m_frameBuffer.empty() ) {
+			Frame::ref fm;
+			if ( m_frameBuffer.try_pop( &fm ) && fm->hasTexture() ) {
+				m_currentFrame      = fm->getTexture();
+				m_currentSample     = fm->getSample();
+				m_lastFrameQueuedAt = now;
 			}
 		}
 	}
@@ -226,20 +227,20 @@ Frame::ref Movie::getCurrentFrame()
 }
 
 
-FrameAndMetdata Movie::getFrame( AP4_Track *track, size_t i_sample ) const
+Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
 {
     AP4_Sample sample;
     AP4_DataBuffer sampleData;
 
 
     if ( AP4_FAILED( track->ReadSample( i_sample, sample, sampleData ))) {
-		return FrameAndMetdata{ 0, nullptr };
+		return Frame::create( 0 );
     }
 
 
-    Frame::ref frame = m_decoder->decode( &sampleData );
+    FrameTexture::ref frame = m_decoder->decode( &sampleData );
 
-	return FrameAndMetdata{ i_sample, frame };
+	return Frame::create( i_sample, frame );
 }
 
 

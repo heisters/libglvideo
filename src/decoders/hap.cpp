@@ -58,7 +58,7 @@ decoders::Hap::Hap( int w, int h, AP4_DataBuffer *sample0 ) :
 }
 
 
-Frame::ref decoders::Hap::decode( AP4_DataBuffer *sampleData )
+FrameTexture::ref decoders::Hap::decode( AP4_DataBuffer *sampleData )
 {
     unsigned int result;
     unsigned long decompressedSize;
@@ -114,11 +114,11 @@ Frame::ref decoders::Hap::decode( AP4_DataBuffer *sampleData )
     if ( format == HapTextureFormat_YCoCg_DXT5 ) format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 
 
-    Frame::Format fmt;
+    FrameTexture::Format fmt;
     fmt
             .width( m_width )
             .height( m_height )
             .internalFormat( format )
             .compressed( true );
-    return Frame::create( m_decompressedTextureBuffer.data(), decompressedSize, fmt );
+    return FrameTexture::create( m_decompressedTextureBuffer.data(), decompressedSize, fmt );
 }

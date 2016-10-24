@@ -4,7 +4,7 @@
 #include <atomic>
 #include "concurrency.h"
 #include "GLContext.h"
-#include "Frame.h"
+#include "FrameTexture.h"
 
 namespace glvideo {
 typedef std::function< void( GLContext::ref ) > context_job;

@@ -12,7 +12,7 @@ public:
 
     JPEG( int w, int h, AP4_DataBuffer *sample0 ) : Decoder( w, h, sample0 ) {}
 
-    virtual Frame::ref decode( AP4_DataBuffer *sampleData ) override;
+    virtual FrameTexture::ref decode( AP4_DataBuffer *sampleData ) override;
 
 private:
 };
