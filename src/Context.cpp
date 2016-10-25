@@ -5,8 +5,7 @@ using namespace std;
 
 
 Worker::Worker( concurrent_queue< context_job > & queue ) :
-	m_queue( queue ),
-	m_glContext( GLContext::makeSharedFromCurrent() )
+	m_queue( queue )
 {
 	m_doWork = true;
 
@@ -24,7 +23,7 @@ void Worker::work()
 	while ( m_doWork ) {
 		context_job job;
 		m_queue.wait_and_pop( &job );
-		job( m_glContext );
+		job();
 	}
 }
 

@@ -10,20 +10,27 @@ class Frame {
 public:
     typedef std::shared_ptr< Frame > ref;
 
-    static ref create( size_t sample, const FrameTexture::ref & ftex = nullptr  )
+    static ref create( unsigned char const *const data, GLsizei imageSize, FrameTexture::Format texFormat = FrameTexture::Format() )
     {
-        return std::make_shared< Frame >( sample, ftex );
+        return std::make_shared< Frame >( data, imageSize, texFormat );
     }
 
-    Frame( size_t sample, const FrameTexture::ref & ftex = nullptr );
+    Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::Format texFormat = FrameTexture::Format() );
 
 
     bool hasTexture() const { return *m_ftex; }
     FrameTexture::ref getTexture() { return m_ftex; }
+    void createTexture();
+
     size_t getSample() const { return m_sample; }
+
+    void setSample( size_t sample ) { m_sample = sample; }
 private:
-    size_t m_sample = 0;
-    FrameTexture::ref m_ftex = nullptr;
+    size_t                              m_sample = 0;
+    std::unique_ptr< unsigned char[] >  m_texData = nullptr;
+    GLsizei                             m_texSize = 0;
+    FrameTexture::Format                m_texFormat = FrameTexture::Format();
+    FrameTexture::ref                   m_ftex = nullptr;
 };
 
 }

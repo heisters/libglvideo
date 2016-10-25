@@ -3,11 +3,10 @@
 #include <thread>
 #include <atomic>
 #include "concurrency.h"
-#include "GLContext.h"
 #include "FrameTexture.h"
 
 namespace glvideo {
-typedef std::function< void( GLContext::ref ) > context_job;
+typedef std::function< void( void ) > context_job;
 
 class Worker
 {
@@ -24,7 +23,6 @@ public:
 private:
 	void work();
 
-	GLContext::ref m_glContext = nullptr;
 	concurrent_queue< context_job > & m_queue;
 	std::thread m_thread;
 	std::atomic_bool m_doWork{false};

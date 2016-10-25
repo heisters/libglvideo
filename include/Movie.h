@@ -139,7 +139,7 @@ private:
 
     /// Reads frames into the frame buffer on a thread, and queues them.
 	void queueRead();
-	void read( GLContext::ref context );
+	void read();
 	void waitForJobsToFinish();
 
 	std::atomic_bool m_isPlaying{ false };

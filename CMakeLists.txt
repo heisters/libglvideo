@@ -98,12 +98,11 @@ set(SOURCE_FILES
     src/FrameTexture.cpp include/FrameTexture.h
     src/Movie.cpp include/Movie.h
     src/TrackDescription.cpp include/TrackDescription.h
-    src/Context.cpp include/Context.h
-    src/GLContext.cpp include/GLContext.h
+    src/Context.cpp
     src/Decoder.cpp include/Decoder.h
     src/decoders/jpeg.cpp include/decoders/jpeg.h
     src/decoders/hap.cpp include/decoders/hap.h
-		src/Frame.cpp include/Frame.h
+	src/Frame.cpp include/Frame.h
     )
 
 add_library(glvideo STATIC ${SOURCE_FILES})

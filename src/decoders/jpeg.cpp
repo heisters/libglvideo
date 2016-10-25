@@ -7,7 +7,7 @@
 
 using namespace glvideo;
 
-FrameTexture::ref decoders::JPEG::decode( AP4_DataBuffer *sampleData )
+Frame::ref decoders::JPEG::decode( AP4_DataBuffer *sampleData )
 {
     int w, h;
     int comp;
@@ -25,7 +25,8 @@ FrameTexture::ref decoders::JPEG::decode( AP4_DataBuffer *sampleData )
             .height( h )
             .internalFormat( comp == 3 ? GL_RGB : GL_RGBA )
             .format( comp == 3 ? GL_RGB : GL_RGBA );
-    FrameTexture::ref frame = FrameTexture::create( data, w * h * comp, fmt );
+    Frame::ref frame = Frame::create( data, w * h * comp, fmt );
+
     stbi_image_free( data );
 
     return frame;

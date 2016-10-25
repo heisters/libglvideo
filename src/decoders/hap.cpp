@@ -58,7 +58,7 @@ decoders::Hap::Hap( int w, int h, AP4_DataBuffer *sample0 ) :
 }
 
 
-FrameTexture::ref decoders::Hap::decode( AP4_DataBuffer *sampleData )
+Frame::ref decoders::Hap::decode( AP4_DataBuffer *sampleData )
 {
     unsigned int result;
     unsigned long decompressedSize;
@@ -120,5 +120,5 @@ FrameTexture::ref decoders::Hap::decode( AP4_DataBuffer *sampleData )
             .height( m_height )
             .internalFormat( format )
             .compressed( true );
-    return FrameTexture::create( m_decompressedTextureBuffer.data(), decompressedSize, fmt );
+    return Frame::create( m_decompressedTextureBuffer.data(), decompressedSize, fmt );
 }
