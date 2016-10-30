@@ -75,6 +75,7 @@ enum {
 
 float randf() { return static_cast< float >( rand() ) / static_cast< float >( RAND_MAX ); }
 
+
 void PezHandleMouse( int x, int y, int action ) {}
 
 void PezUpdate( unsigned int elapsedMilliseconds )
@@ -86,10 +87,9 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         frameTimes.pop_front();
     }
 
-
     for ( auto & movie : movies ) movie->update();
 
-        auto now = hrclock::now();
+    auto now = hrclock::now();
     if ( chrono::duration_cast<chrono::seconds>( now - lastReportTime ).count() > 1 ) {
         double avg = (double) sumElapsedMilliseconds / (double) frameTimes.size();
         double fps = 1000.0 / avg;
@@ -104,31 +104,11 @@ void PezUpdate( unsigned int elapsedMilliseconds )
 }
 
 
-void checkGlError()
-{
-	GLenum err( glGetError() );
-	while ( err != GL_NO_ERROR ) {
-		string error;
-
-		switch ( err ) {
-		case GL_INVALID_OPERATION:      error = "INVALID_OPERATION";      break;
-		case GL_INVALID_ENUM:           error = "INVALID_ENUM";           break;
-		case GL_INVALID_VALUE:          error = "INVALID_VALUE";          break;
-		case GL_OUT_OF_MEMORY:          error = "OUT_OF_MEMORY";          break;
-		case GL_INVALID_FRAMEBUFFER_OPERATION:  error = "INVALID_FRAMEBUFFER_OPERATION";  break;
-		}
-
-		DBOUT( "GL_" << error.c_str() );
-		err = glGetError();
-	}
-}
-
 void PezRender()
 {
-	glClear( GL_COLOR_BUFFER_BIT );
+    glClear( GL_COLOR_BUFFER_BIT );
 
     glActiveTexture( GL_TEXTURE0 );
-
 
 	int n = sqrt( movies.size() );
 	float size = COORD_EXTENTS * 2.f / (float)n;
@@ -160,7 +140,7 @@ void PezRender()
 		++i;
 	}
 
-	checkGlError();
+	checkGlError( __FILE__, __LINE__ );
 }
 
 const char *PezInitialize( int width, int height )

@@ -7,7 +7,6 @@ using namespace glvideo;
 FrameTexture::FrameTexture( GLuint pbo, GLsizei imageSize, Format format ) :
         m_target( GL_TEXTURE_2D )
 {
-    glEnable( m_target );
     glGenTextures( 1, &m_tex );
     glBindTexture( m_target, m_tex );
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER, pbo );

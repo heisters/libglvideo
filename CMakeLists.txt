@@ -92,6 +92,7 @@ set(SOURCE_FILES
     lib/snappy/snappy-sinksource.cc lib/snappy/snappy-sinksource.h
     lib/snappy/snappy.cc
     lib/hap/source/hap.c lib/hap/source/hap.h
+    include/debug.h
     include/glvideo.h
     src/gl_includes.cpp include/gl_includes.h
     include/concurrency.h

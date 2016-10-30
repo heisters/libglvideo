@@ -44,10 +44,11 @@ extern PFNGLUNMAPBUFFERPROC            _glUnmapBuffer;
 #define glMapBuffer _glMapBuffer
 #define glUnmapBuffer _glUnmapBuffer
 
-#define GL_TEXTURE_COMPRESSION_HINT 0x84EF
-#define GL_PIXEL_UNPACK_BUFFER      0x88EC
-#define GL_STATIC_DRAW              0x88E4
-#define GL_WRITE_ONLY               0x88B9
+#define GL_TEXTURE_COMPRESSION_HINT         0x84EF
+#define GL_PIXEL_UNPACK_BUFFER              0x88EC
+#define GL_STATIC_DRAW                      0x88E4
+#define GL_WRITE_ONLY                       0x88B9
+#define GL_INVALID_FRAMEBUFFER_OPERATION    0x0506
 
 #endif
 

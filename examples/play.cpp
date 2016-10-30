@@ -6,6 +6,7 @@
 #include <chrono>
 #include <sstream>
 #include "glvideo.h"
+#include "debug.h"
 
 using namespace std;
 
@@ -82,33 +83,11 @@ void PezUpdate( unsigned int elapsedMilliseconds )
     if ( chrono::duration_cast<chrono::seconds>( now - lastReportTime ).count() > 1 ) {
         double avg = (double) sumElapsedMilliseconds / (double) frameTimes.size();
         double fps = 1000.0 / avg;
-        cout << "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" << endl;
+        DBOUT( "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" )
         lastReportTime = now;
     }
 }
 
-
-void checkGlError()
-{
-	GLenum err( glGetError() );
-	while ( err != GL_NO_ERROR ) {
-		string error;
-
-		switch ( err ) {
-		case GL_INVALID_OPERATION:      error = "INVALID_OPERATION";      break;
-		case GL_INVALID_ENUM:           error = "INVALID_ENUM";           break;
-		case GL_INVALID_VALUE:          error = "INVALID_VALUE";          break;
-		case GL_OUT_OF_MEMORY:          error = "OUT_OF_MEMORY";          break;
-		case GL_INVALID_FRAMEBUFFER_OPERATION:  error = "INVALID_FRAMEBUFFER_OPERATION";  break;
-		}
-
-		cerr << "GL_" << error.c_str() << endl;
-#if defined( GLVIDEO_MSW )
-		OutputDebugString( ( "GL Error: GL_" + error ).c_str() );
-#endif
-		err = glGetError();
-	}
-}
 
 void PezRender()
 {
@@ -121,7 +100,7 @@ void PezRender()
 		glDrawArrays( GL_TRIANGLES, 0, 6 );
 	}
 
-	checkGlError();
+	checkGlError( __FILE__, __LINE__ );
 }
 
 const char *PezInitialize( int width, int height )
@@ -135,13 +114,13 @@ const char *PezInitialize( int width, int height )
     BuildGeometry((float) width / (float) height );
 	LoadEffect( movie->getCodec() == "HapY" );
 
-    cout << "Format: " << movie->getFormat() << endl;
-    cout << "Duration (seconds): " << movie->getDuration() << endl;
-    cout << "Size: " << movie->getWidth() << "x" << movie->getHeight() << endl;
-    cout << "Framerate: " << movie->getFramerate() << endl;
-    cout << "Number of tracks: " << movie->getNumTracks() << endl;
+    DBOUT( "Format: " << movie->getFormat() );
+    DBOUT( "Duration (seconds): " << movie->getDuration() );
+    DBOUT( "Size: " << movie->getWidth() << "x" << movie->getHeight() );
+    DBOUT( "Framerate: " << movie->getFramerate() );
+    DBOUT( "Number of tracks: " << movie->getNumTracks() );
     for ( int i = 0; i < movie->getNumTracks(); ++i ) {
-        cout << "\tTrack " << i << " type: " << movie->getTrackDescription( i ) << endl;
+        DBOUT( "\tTrack " << i << " type: " << movie->getTrackDescription( i ) );
     }
 
     movie->loop().play();
