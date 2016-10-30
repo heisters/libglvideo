@@ -4,23 +4,9 @@
 
 using namespace glvideo;
 
-
-#define GL_TEXTURE_COMPRESSION_HINT 0x84EF
-
-#if defined( GLVIDEO_MSW )
-
-typedef void ( APIENTRY * PFNGLCOMPRESSEDTEXIMAGE2DPROC ) ( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data );
-
-#endif
-
-
 FrameTexture::FrameTexture( GLuint pbo, GLsizei imageSize, Format format ) :
         m_target( GL_TEXTURE_2D )
 {
-#if defined( GLVIDEO_MSW )
-		PFNGLCOMPRESSEDTEXIMAGE2DPROC glCompressedTexImage2D = (PFNGLCOMPRESSEDTEXIMAGE2DPROC)wglGetProcAddress( "glCompressedTexImage2D" );
-#endif
-
     glEnable( m_target );
     glGenTextures( 1, &m_tex );
     glBindTexture( m_target, m_tex );

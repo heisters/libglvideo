@@ -32,6 +32,8 @@ void Worker::work()
 
 Context::Context( size_t nWorkers )
 {
+    assignGlFunctionPointers();
+
 	for ( size_t i = 0; i < nWorkers; ++i ) {
 		m_workers.push_back( make_shared< Worker >( m_jobQueue ) );
 	}

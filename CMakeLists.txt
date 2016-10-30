@@ -93,12 +93,12 @@ set(SOURCE_FILES
     lib/snappy/snappy.cc
     lib/hap/source/hap.c lib/hap/source/hap.h
     include/glvideo.h
-    include/gl_includes.h
+    src/gl_includes.cpp include/gl_includes.h
     include/concurrency.h
     src/FrameTexture.cpp include/FrameTexture.h
     src/Movie.cpp include/Movie.h
     src/TrackDescription.cpp include/TrackDescription.h
-    src/Context.cpp
+    src/Context.cpp include/Context.h
     src/Decoder.cpp include/Decoder.h
     src/decoders/jpeg.cpp include/decoders/jpeg.h
     src/decoders/hap.cpp include/decoders/hap.h

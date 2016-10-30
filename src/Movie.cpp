@@ -8,7 +8,6 @@ using namespace std;
 using namespace glvideo;
 
 
-
 Movie::Movie( const Context::ref &context, const string &filename, const Options &options ) :
 	m_context( context ),
 	m_options( options ),
