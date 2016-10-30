@@ -24,7 +24,7 @@ FrameTexture::FrameTexture( GLuint pbo, GLsizei imageSize, Format format ) :
     glEnable( m_target );
     glGenTextures( 1, &m_tex );
     glBindTexture( m_target, m_tex );
-    glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, pbo );
+    glBindBuffer( GL_PIXEL_UNPACK_BUFFER, pbo );
     if ( format.compressed() ) {
         glCompressedTexImage2D( m_target,
                                 0,
@@ -49,7 +49,7 @@ FrameTexture::FrameTexture( GLuint pbo, GLsizei imageSize, Format format ) :
     glTexParameteri( m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameteri( m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-    glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
+    glBindBuffer( GL_PIXEL_UNPACK_BUFFER, 0 );
     glBindTexture( m_target, 0 );
 }
 

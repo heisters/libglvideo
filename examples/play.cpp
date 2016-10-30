@@ -76,6 +76,8 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         frameTimes.pop_front();
     }
 
+    movie->update();
+
     auto now = hrclock::now();
     if ( chrono::duration_cast<chrono::seconds>( now - lastReportTime ).count() > 1 ) {
         double avg = (double) sumElapsedMilliseconds / (double) frameTimes.size();

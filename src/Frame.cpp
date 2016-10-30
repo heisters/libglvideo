@@ -13,22 +13,27 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::
     copy( data, data + m_texSize, m_texData.get() );
 }
 
-void Frame::createTexture( GLuint pbo )
+void Frame::createTexture()
 {
     if ( m_ftex ) return;
 
-    m_ftex = FrameTexture::create( pbo, m_texSize, m_texFormat );
+    m_ftex = FrameTexture::create( m_pbo, m_texSize, m_texFormat );
 }
 
 bool Frame::bufferTexture( GLuint pbo )
 {
-    glBindBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, pbo );
-    glBufferDataARB( GL_PIXEL_UNPACK_BUFFER_ARB, m_texSize, 0, GL_STREAM_DRAW_ARB );
-    GLubyte* buffer = (GLubyte*)glMapBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB, GL_WRITE_ONLY_ARB );
+    glBindBuffer( GL_PIXEL_UNPACK_BUFFER, pbo );
+    // Call glBufferDataARB to cancel any work the GPU is currently doing with
+    // the PBO, to avoid glMapBufferARB blocking in the case that there is
+    // pending work.
+    glBufferData( GL_PIXEL_UNPACK_BUFFER, m_texSize, NULL, GL_STATIC_DRAW );
+
+    GLubyte* buffer = (GLubyte*)glMapBuffer( GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY );
 
     if ( buffer ) {
         copy( m_texData.get(), m_texData.get() + m_texSize, buffer );
-        glUnmapBufferARB( GL_PIXEL_UNPACK_BUFFER_ARB );
+        glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER );
+        m_pbo = pbo;
         return true;
     }
 

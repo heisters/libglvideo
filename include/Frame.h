@@ -22,8 +22,9 @@ public:
     FrameTexture::ref getTexture() { return m_ftex; }
 
 
+    bool isBuffered() const { return m_pbo != 0; }
     bool bufferTexture( GLuint pbo );
-    void createTexture( GLuint pbo );
+    void createTexture();
 
     size_t getSample() const { return m_sample; }
 
@@ -34,6 +35,7 @@ private:
     GLsizei                             m_texSize = 0;
     FrameTexture::Format                m_texFormat = FrameTexture::Format();
     FrameTexture::ref                   m_ftex = nullptr;
+    GLuint                              m_pbo = 0;
 };
 
 }

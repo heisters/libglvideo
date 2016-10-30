@@ -37,14 +37,23 @@ public:
     public:
         Options() {}
 
-        /// Set the number of \a frames to be buffered by the movie. Higher
-		/// values result in smoother playback, but use more memory.
-        Options &bufferSize( size_t frames ) { m_bufferSize = frames; return *this; }
-        size_t bufferSize() const { return m_bufferSize; }
-        size_t &bufferSize() { return m_bufferSize; }
+        /// Set the number of \a frames to be buffered in CPU memory by the
+        /// movie. Higher values result in smoother playback, but use more
+        /// CPU memory.
+        Options &cpuBufferSize( size_t frames ) { m_cpuBufferSize = frames; return *this; }
+        size_t cpuBufferSize() const { return m_cpuBufferSize; }
+        size_t &cpuBufferSize() { return m_cpuBufferSize; }
+
+        /// Set the number of \a frames to be buffered in GPU memory by the
+        /// movie. Higher values result in smoother playback, but use more
+        /// GPU memory. Any value lower than 2 may cause playback issues.
+        Options &gpuBufferSize( size_t frames ) { m_gpuBufferSize = frames; return *this; }
+        size_t gpuBufferSize() const { return m_gpuBufferSize; }
+        size_t &gpuBufferSize() { return m_gpuBufferSize; }
 
     private:
-        size_t m_bufferSize = 10;
+        size_t m_cpuBufferSize = 10;
+        size_t m_gpuBufferSize = 2;
     };
 
 
@@ -111,10 +120,14 @@ public:
 	Movie & loop( bool loop = true ) { m_loop = loop; return *this; }
 
 	/// Set the playhead to the beginning of the video.
-	Movie & seekToStart() { m_readSample = 0; m_frameBuffer.clear(); return *this; }
+	Movie & seekToStart() { m_readSample = 0; m_cpuFrameBuffer.clear(); return *this; }
 
     /// Returns the current Frame.
-    FrameTexture::ref getCurrentFrame();
+    FrameTexture::ref getCurrentFrame() const;
+
+
+    /// Call this in the application update method
+    void update();
 
 private:
     std::string getTrackCodec( size_t index ) const;
@@ -133,7 +146,7 @@ private:
     std::string m_codec;
 	size_t m_numSamples = 0;
 	size_t m_currentSample = 0;
-    std::array< GLuint, 2 > m_pbos;
+    std::vector< GLuint > m_pbos;
     size_t m_currentPBO = 0;
 
 
@@ -152,7 +165,8 @@ private:
 	std::mutex m_jobsMutex;
 	std::atomic_bool m_loop{ false };
 	std::atomic< size_t > m_readSample{ 0 };
-	concurrent_buffer< Frame::ref > m_frameBuffer;
+	concurrent_buffer< Frame::ref > m_cpuFrameBuffer;
+    std::deque< Frame::ref > m_gpuFrameBuffer;
 	clock::time_point m_lastFrameQueuedAt;
 };
 }

@@ -12,7 +12,8 @@ using namespace glvideo;
 Movie::Movie( const Context::ref &context, const string &filename, const Options &options ) :
 	m_context( context ),
 	m_options( options ),
-	m_frameBuffer( options.bufferSize() )
+	m_cpuFrameBuffer( options.cpuBufferSize() ),
+    m_pbos( options.gpuBufferSize(), 0 )
 {
     AP4_Result result;
     AP4_ByteStream *input = NULL;
@@ -82,7 +83,7 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
 
 
     // Initialize GPU resources
-    glGenBuffersARB( (GLsizei)m_pbos.size(), m_pbos.data() );
+    glGenBuffers( (GLsizei)m_pbos.size(), m_pbos.data() );
 }
 
 Movie::~Movie()
@@ -90,7 +91,7 @@ Movie::~Movie()
     if ( isPlaying() ) stop();
 	if ( m_jobsPending ) waitForJobsToFinish();
 
-    glDeleteBuffersARB( (GLsizei)m_pbos.size(), m_pbos.data() );
+    glDeleteBuffers( (GLsizei)m_pbos.size(), m_pbos.data() );
 }
 
 string Movie::getFormat() const
@@ -181,20 +182,27 @@ void Movie::queueRead()
 
 void Movie::read()
 {
-	if ( ! m_frameBuffer.is_full() && m_readSample < m_numSamples ) {
+    // Buffer frames into CPU memory
+
+    if ( ! m_cpuFrameBuffer.is_full() && m_readSample < m_numSamples ) {
 
 		auto frame = getFrame( m_videoTrack, m_readSample );
 		if ( frame ) {
-			m_frameBuffer.push( frame );
+            m_cpuFrameBuffer.push( frame );
 
 			m_readSample++;
 			if ( m_loop ) m_readSample = m_readSample % m_numSamples;
 		}
 	}
 
+
+    // Schedule next read job, or notify waiting thread that all jobs
+    // have finished.
+
 	if ( m_isPlaying ) {
 		queueRead();
 	}
+
 	else {
 		m_jobsPending = false;
 		m_jobsPendingCV.notify_one();
@@ -209,27 +217,36 @@ void Movie::waitForJobsToFinish()
 	}
 }
 
-FrameTexture::ref Movie::getCurrentFrame()
+void Movie::update()
 {
-	{
-		const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
-		const auto nextFrameTime = m_lastFrameQueuedAt + spf;
+    if ( m_gpuFrameBuffer.size() < m_options.gpuBufferSize() ) {
+        Frame::ref frame;
+        if ( m_cpuFrameBuffer.try_pop( &frame ) ) {
+            frame->bufferTexture( m_pbos[m_currentPBO] );
+            m_gpuFrameBuffer.push_back( frame );
+            m_currentPBO = (m_currentPBO + 1) % m_pbos.size();
+        }
+    }
+
+
+    {
+        const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
+        const auto nextFrameTime = m_lastFrameQueuedAt + spf;
 
         auto now = clock::now();
-		if ( now >= nextFrameTime && ! m_frameBuffer.empty() ) {
-			Frame::ref fm;
-			if ( m_frameBuffer.try_pop( &fm ) ) {
-                if ( fm->bufferTexture( m_pbos[m_currentPBO] ) ) {
-                    fm->createTexture( m_pbos[m_currentPBO] );
-                    m_currentFrame      = fm->getTexture();
-                    m_currentSample     = fm->getSample();
-                    m_lastFrameQueuedAt = now;
-                    m_currentPBO = (m_currentPBO + 1) % m_pbos.size();
-                }
-			}
-		}
-	}
+        if ( now >= nextFrameTime && ! m_gpuFrameBuffer.empty() ) {
+            Frame::ref frame = m_gpuFrameBuffer.front();
+            m_gpuFrameBuffer.pop_front();
+            frame->createTexture();
+            m_currentFrame      = frame->getTexture();
+            m_currentSample     = frame->getSample();
+            m_lastFrameQueuedAt = now;
+        }
+    }
+}
 
+FrameTexture::ref Movie::getCurrentFrame() const
+{
     return m_currentFrame;
 }
 
