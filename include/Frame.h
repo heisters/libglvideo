@@ -20,7 +20,10 @@ public:
 
     bool hasTexture() const { return *m_ftex; }
     FrameTexture::ref getTexture() { return m_ftex; }
-    void createTexture();
+
+
+    bool bufferTexture( GLuint pbo );
+    void createTexture( GLuint pbo );
 
     size_t getSample() const { return m_sample; }
 

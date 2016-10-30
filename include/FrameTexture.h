@@ -49,14 +49,14 @@ public:
     };
 
 
-    /// Returns a ref to a new Frame
-    static ref create( unsigned char const *const data, GLsizei imageSize, Format format = Format())
+    /// Returns a ref to a new FrameTexture
+    static ref create( GLuint pbo, GLsizei imageSize, Format format = Format())
     {
-        return std::make_shared<FrameTexture>( data, imageSize, format );
+        return std::make_shared<FrameTexture>( pbo, imageSize, format );
     }
 
-    /// Constructs a Frame from raw data, and uploads the data to the GPU.
-    FrameTexture( unsigned char const *const data, GLsizei imageSize, Format format = Format() );
+    /// Constructs a FrameTexture from data buffered in a PBO
+    FrameTexture( GLuint pbo, GLsizei imageSize, Format format = Format() );
 
     /// Uses RAII to clean up GPU textures.
     ~FrameTexture();

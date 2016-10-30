@@ -124,8 +124,7 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-//    string filename = "/Users/ian/Desktop/MJPEG.mov";
-    string filename = "/Users/ian/Desktop/Hap.mov";
+    string filename = "examples/videos/hap-3840x2160-60fps.mov";
 
 	context = glvideo::Context::create( 2 );
     movie = glvideo::Movie::create( context, filename );

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <array>
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -11,6 +12,7 @@
 #include "Context.h"
 #include "Decoder.h"
 #include "concurrency.h"
+#include "gl_includes.h"
 
 class AP4_File;
 class AP4_Track;
@@ -131,6 +133,8 @@ private:
     std::string m_codec;
 	size_t m_numSamples = 0;
 	size_t m_currentSample = 0;
+    std::array< GLuint, 2 > m_pbos;
+    size_t m_currentPBO = 0;
 
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.

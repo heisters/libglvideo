@@ -1,7 +1,6 @@
 #include "Movie.h"
 #include "Ap4.h"
 #include <sstream>
-#include <algorithm>
 #include "decoders/jpeg.h"
 #include "decoders/hap.h"
 
@@ -80,12 +79,18 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
     } else {
         throw UnsupportedCodecError( "unsupported codec: " + m_codec );
     }
+
+
+    // Initialize GPU resources
+    glGenBuffersARB( (GLsizei)m_pbos.size(), m_pbos.data() );
 }
 
 Movie::~Movie()
 {
     if ( isPlaying() ) stop();
 	if ( m_jobsPending ) waitForJobsToFinish();
+
+    glDeleteBuffersARB( (GLsizei)m_pbos.size(), m_pbos.data() );
 }
 
 string Movie::getFormat() const
@@ -214,10 +219,13 @@ FrameTexture::ref Movie::getCurrentFrame()
 		if ( now >= nextFrameTime && ! m_frameBuffer.empty() ) {
 			Frame::ref fm;
 			if ( m_frameBuffer.try_pop( &fm ) ) {
-                fm->createTexture();
-				m_currentFrame      = fm->getTexture();
-				m_currentSample     = fm->getSample();
-				m_lastFrameQueuedAt = now;
+                if ( fm->bufferTexture( m_pbos[m_currentPBO] ) ) {
+                    fm->createTexture( m_pbos[m_currentPBO] );
+                    m_currentFrame      = fm->getTexture();
+                    m_currentSample     = fm->getSample();
+                    m_lastFrameQueuedAt = now;
+                    m_currentPBO = (m_currentPBO + 1) % m_pbos.size();
+                }
 			}
 		}
 	}
