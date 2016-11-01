@@ -236,11 +236,13 @@ void Movie::update()
         auto now = clock::now();
         if ( now >= nextFrameTime && ! m_gpuFrameBuffer.empty() ) {
             Frame::ref frame = m_gpuFrameBuffer.front();
-            m_gpuFrameBuffer.pop_front();
-            frame->createTexture();
-            m_currentFrame      = frame->getTexture();
-            m_currentSample     = frame->getSample();
-            m_lastFrameQueuedAt = now;
+            if ( frame->isBuffered() ) {
+                m_gpuFrameBuffer.pop_front();
+                frame->createTexture();
+                m_currentFrame = frame->getTexture();
+                m_currentSample = frame->getSample();
+                m_lastFrameQueuedAt = now;
+            }
         }
     }
 }

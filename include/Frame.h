@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+#include "gl_includes.h"
 #include "FrameTexture.h"
 
 namespace glvideo {
@@ -22,7 +24,7 @@ public:
     FrameTexture::ref getTexture() { return m_ftex; }
 
 
-    bool isBuffered() const { return m_pbo != 0; }
+    bool isBuffered();
     bool bufferTexture( GLuint pbo );
     void createTexture();
 
@@ -36,6 +38,7 @@ private:
     FrameTexture::Format                m_texFormat = FrameTexture::Format();
     FrameTexture::ref                   m_ftex = nullptr;
     GLuint                              m_pbo = 0;
+    GLsync                              m_sync = nullptr;
 };
 
 }

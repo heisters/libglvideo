@@ -55,7 +55,7 @@ void main()
 
 
 const float COORD_EXTENTS = 1.f;
-const int NUM_MOVIES = 16;
+const int NUM_MOVIES = 4;
 std::vector< glvideo::Movie::ref > movies;
 glvideo::Context::ref context;
 
@@ -145,12 +145,13 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-    string filename = "examples/videos/hap-3840x2160-60fps.mov";
+    string filename = "examples/videos/hap-1920x1080-24fps.mov";
 	srand( static_cast< unsigned >( time( 0 ) ) );
 
-	context = glvideo::Context::create( 8 );
+	context = glvideo::Context::create( 4 );
+    auto options = glvideo::Movie::Options();
 	for ( int i = 0; i < NUM_MOVIES; ++i ) {
-		auto movie = glvideo::Movie::create( context, filename );
+		auto movie = glvideo::Movie::create( context, filename, options );
 		movies.push_back( movie );
 
 		DBOUT( "Format: " << movie->getFormat() );

@@ -9,6 +9,9 @@ PFNGLDELETEBUFFERSPROC          _glDeleteBuffers;
 PFNGLBUFFERDATAPROC             _glBufferData;
 PFNGLMAPBUFFERPROC              _glMapBuffer;
 PFNGLUNMAPBUFFERPROC            _glUnmapBuffer;
+PFNGLDELETESYNCPROC             _glDeleteSync;
+PFNGLFENCESYNCPROC              _glFenceSync;
+PFNGLCLIENTWAITSYNCPROC         _glClientWaitSync;
 
 void assignGlFunctionPointers()
 {
@@ -19,6 +22,9 @@ void assignGlFunctionPointers()
     _glBufferData = (PFNGLBUFFERDATAPROC)wglGetProcAddress( "glBufferData" );
     _glMapBuffer = (PFNGLMAPBUFFERPROC)wglGetProcAddress( "glMapBuffer" );
     _glUnmapBuffer = (PFNGLUNMAPBUFFERPROC)wglGetProcAddress( "glUnmapBuffer" );
+    _glDeleteSync = (PFNGLDELETESYNCPROC)wglGetProcAddress( "glDeleteSync" );
+    _glFenceSync = (PFNGLFENCESYNCPROC)wglGetProcAddress( "glFenceSync" );
+    _glClientWaitSync = (PFNGLCLIENTWAITSYNCPROC)wglGetProcAddress( "glClientWaitSync" );
 }
 
 #else

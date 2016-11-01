@@ -34,8 +34,30 @@ bool Frame::bufferTexture( GLuint pbo )
         copy( m_texData.get(), m_texData.get() + m_texSize, buffer );
         glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER );
         m_pbo = pbo;
+
+        if ( m_sync ) glDeleteSync( m_sync );
+        m_sync = (GLsync)glFenceSync( GL_SYNC_FLUSH_COMMANDS_BIT, 0L );
+
         return true;
     }
 
     return false;
+}
+
+bool Frame::isBuffered()
+{
+    if ( m_pbo == 0 ) return false;
+    if ( ! m_sync ) return false;
+
+    GLenum status = (GLenum)glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0L );
+    switch ( status ) {
+    case GL_CONDITION_SATISFIED:
+    case GL_ALREADY_SIGNALED:
+        return true;
+        break;
+    case GL_WAIT_FAILED:
+    case GL_TIMEOUT_EXPIRED:
+        return false;
+        break;
+    }
 }
