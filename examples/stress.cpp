@@ -154,10 +154,7 @@ const char *PezInitialize( int width, int height )
 	srand( static_cast< unsigned >( time( 0 ) ) );
 
 	context = glvideo::Context::create( 4 );
-    auto options = glvideo::Movie::Options()
-        .cpuBufferSize( 24 * 10 ) // 24 fps * 10 seconds
-        .gpuBufferSize( 24 * 5 )
-        ;
+    auto options = glvideo::Movie::Options();
 	for ( int i = 0; i < NUM_MOVIES; ++i ) {
 		auto movie = glvideo::Movie::create( context, filename, options );
 		movies.push_back( movie );

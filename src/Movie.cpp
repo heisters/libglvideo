@@ -13,7 +13,8 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
 	m_context( context ),
 	m_options( options ),
 	m_cpuFrameBuffer( options.cpuBufferSize() ),
-    m_pbos( options.gpuBufferSize(), 0 )
+    m_pbos( options.gpuBufferSize(), 0 ),
+    m_gpuFrameBuffer( options.gpuBufferSize() )
 {
     AP4_Result result;
     AP4_ByteStream *input = NULL;
@@ -219,9 +220,8 @@ void Movie::update()
 
         auto now = clock::now();
         if ( now >= nextFrameTime && ! m_gpuFrameBuffer.empty() ) {
-            Frame::ref frame = m_gpuFrameBuffer.front();
-            if ( frame->isBuffered() ) {
-                m_gpuFrameBuffer.pop_front();
+            Frame::ref frame;
+            if ( m_gpuFrameBuffer.try_pop( &frame ) && frame->isBuffered() ) {
                 frame->createTexture();
                 m_currentFrame = frame->getTexture();
                 m_currentSample = frame->getSample();
@@ -247,11 +247,11 @@ void Movie::bufferNextCPUSample()
 
 void Movie::bufferNextGPUSample()
 {
-    if ( m_gpuFrameBuffer.size() < m_options.gpuBufferSize() ) {
+    if ( ! m_gpuFrameBuffer.is_full() ) {
         Frame::ref frame;
         if ( m_cpuFrameBuffer.try_pop( &frame ) ) {
             frame->bufferTexture( m_pbos[ m_currentPBO ] );
-            m_gpuFrameBuffer.push_back( frame );
+            m_gpuFrameBuffer.push( frame );
             m_currentPBO = ( m_currentPBO + 1 ) % m_pbos.size();
         }
     }
@@ -259,13 +259,17 @@ void Movie::bufferNextGPUSample()
 
 void Movie::prebuffer()
 {
-    return;
-    for ( size_t i = 0; i < m_cpuFrameBuffer.remainingSize(); ++i ) {
-        m_context->queueJob( bind( &Movie::bufferNextCPUSample, this ) );
+    m_context->queueJob( bind( &Movie::doPrebufferWork, this ) );
+}
+
+void Movie::doPrebufferWork()
+{
+    while ( ! m_cpuFrameBuffer.is_full() ) {
+        bufferNextCPUSample();
     }
 
-    for ( size_t i = 0; i < ( m_options.gpuBufferSize() - m_gpuFrameBuffer.size() ); ++i ) {
-        m_context->queueJob( bind( &Movie::bufferNextGPUSample, this ) );
+    while ( ! m_gpuFrameBuffer.is_full() ) {
+        bufferNextGPUSample();
     }
 }
 

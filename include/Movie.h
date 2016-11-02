@@ -162,6 +162,7 @@ private:
 	void queueRead();
 	void read();
 	void waitForJobsToFinish();
+    void doPrebufferWork();
     void bufferNextCPUSample();
     void bufferNextGPUSample();
 
@@ -172,7 +173,7 @@ private:
 	std::atomic_bool m_loop{ false };
 	std::atomic< size_t > m_readSample{ 0 };
 	concurrent_buffer< Frame::ref > m_cpuFrameBuffer;
-    std::deque< Frame::ref > m_gpuFrameBuffer;
+    concurrent_buffer< Frame::ref > m_gpuFrameBuffer;
 	clock::time_point m_lastFrameQueuedAt;
 };
 }
