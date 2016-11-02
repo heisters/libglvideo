@@ -125,9 +125,13 @@ public:
     /// Returns the current Frame.
     FrameTexture::ref getCurrentFrame() const;
 
-
-    /// Call this in the application update method
+    /// Call this in the application update method.
+    /// Buffers frames to the GPU in the current OpenGL context and queues the
+    /// next frame.
     void update();
+
+    /// Fill buffers with samples.
+    void prebuffer();
 
 private:
     std::string getTrackCodec( size_t index ) const;
@@ -158,6 +162,8 @@ private:
 	void queueRead();
 	void read();
 	void waitForJobsToFinish();
+    void bufferNextCPUSample();
+    void bufferNextGPUSample();
 
 	std::atomic_bool m_isPlaying{ false };
 	std::atomic_bool m_jobsPending{ false };

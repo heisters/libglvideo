@@ -7,6 +7,7 @@
 
 namespace glvideo {
 typedef std::function< void( void ) > context_job;
+typedef std::function< void( void ) > job_done_callback;
 
 class Worker
 {

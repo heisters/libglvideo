@@ -94,8 +94,8 @@ set(SOURCE_FILES
     lib/hap/source/hap.c lib/hap/source/hap.h
     include/debug.h
     include/glvideo.h
-    include/glcorearb.h
-    src/gl_includes.cpp include/gl_includes.h
+    include/gl_includes.h
+    src/gl_load.cpp include/gl_load.h
     include/concurrency.h
     src/FrameTexture.cpp include/FrameTexture.h
     src/Movie.cpp include/Movie.h

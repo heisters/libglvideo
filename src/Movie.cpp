@@ -3,7 +3,7 @@
 #include <sstream>
 #include "decoders/jpeg.h"
 #include "decoders/hap.h"
-
+#include "gl_load.h"
 
 using namespace std;
 using namespace glvideo;
@@ -84,6 +84,8 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
 
     // Initialize GPU resources
     glGenBuffers( (GLsizei)m_pbos.size(), m_pbos.data() );
+
+    prebuffer();
 }
 
 Movie::~Movie()
@@ -184,17 +186,7 @@ void Movie::read()
 {
     // Buffer frames into CPU memory
 
-    if ( ! m_cpuFrameBuffer.is_full() && m_readSample < m_numSamples ) {
-
-		auto frame = getFrame( m_videoTrack, m_readSample );
-		if ( frame ) {
-            m_cpuFrameBuffer.push( frame );
-
-			m_readSample++;
-			if ( m_loop ) m_readSample = m_readSample % m_numSamples;
-		}
-	}
-
+    bufferNextCPUSample();
 
     // Schedule next read job, or notify waiting thread that all jobs
     // have finished.
@@ -219,15 +211,7 @@ void Movie::waitForJobsToFinish()
 
 void Movie::update()
 {
-    if ( m_gpuFrameBuffer.size() < m_options.gpuBufferSize() ) {
-        Frame::ref frame;
-        if ( m_cpuFrameBuffer.try_pop( &frame ) ) {
-            frame->bufferTexture( m_pbos[m_currentPBO] );
-            m_gpuFrameBuffer.push_back( frame );
-            m_currentPBO = (m_currentPBO + 1) % m_pbos.size();
-        }
-    }
-
+    bufferNextGPUSample();
 
     {
         const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
@@ -244,6 +228,44 @@ void Movie::update()
                 m_lastFrameQueuedAt = now;
             }
         }
+    }
+}
+
+void Movie::bufferNextCPUSample()
+{
+    if ( ! m_cpuFrameBuffer.is_full() && m_readSample < m_numSamples ) {
+
+        auto frame = getFrame( m_videoTrack, m_readSample );
+        if ( frame ) {
+            m_cpuFrameBuffer.push( frame );
+
+            m_readSample++;
+            if ( m_loop ) m_readSample = m_readSample % m_numSamples;
+        }
+    }
+}
+
+void Movie::bufferNextGPUSample()
+{
+    if ( m_gpuFrameBuffer.size() < m_options.gpuBufferSize() ) {
+        Frame::ref frame;
+        if ( m_cpuFrameBuffer.try_pop( &frame ) ) {
+            frame->bufferTexture( m_pbos[ m_currentPBO ] );
+            m_gpuFrameBuffer.push_back( frame );
+            m_currentPBO = ( m_currentPBO + 1 ) % m_pbos.size();
+        }
+    }
+}
+
+void Movie::prebuffer()
+{
+    return;
+    for ( size_t i = 0; i < m_cpuFrameBuffer.remainingSize(); ++i ) {
+        m_context->queueJob( bind( &Movie::bufferNextCPUSample, this ) );
+    }
+
+    for ( size_t i = 0; i < ( m_options.gpuBufferSize() - m_gpuFrameBuffer.size() ); ++i ) {
+        m_context->queueJob( bind( &Movie::bufferNextGPUSample, this ) );
     }
 }
 
@@ -265,7 +287,7 @@ Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
 
 
     Frame::ref frame = m_decoder->decode( &sampleData );
-    frame->setSample( i_sample );
+    if ( frame ) frame->setSample( i_sample );
 
 	return frame;
 }

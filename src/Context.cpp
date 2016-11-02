@@ -1,4 +1,5 @@
 #include "Context.h"
+#include "gl_load.h"
 
 using namespace glvideo;
 using namespace std;
@@ -43,3 +44,4 @@ void Context::queueJob( context_job job )
 {
 	m_jobQueue.push( job );
 }
+

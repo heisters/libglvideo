@@ -76,8 +76,7 @@ public:
 
     bool is_full() const
     {
-        std::lock_guard<std::mutex> lock( this->m_mutex );
-        return this->m_queue.size() >= m_maxSize;
+        return remainingSize() == 0;
     }
 
 	void clear()
@@ -87,6 +86,13 @@ public:
 		std::queue< Data > empty;
 		std::swap( this->m_queue, empty );
 	}
+
+    size_t size() const { return m_maxSize; }
+    size_t remainingSize() const
+    {
+        std::lock_guard<std::mutex> lock( this->m_mutex );
+        return m_maxSize - this->m_queue.size();
+    }
 };
 
 }

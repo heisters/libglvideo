@@ -1,4 +1,4 @@
-#include "gl_includes.h"
+#include "gl_load.h"
 
 #ifdef GLVIDEO_MSW
 

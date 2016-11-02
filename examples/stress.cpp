@@ -15,9 +15,10 @@ using namespace std;
 
 static const std::string VERTEX_SHADER_SOURCE =
 R"EOF(
-attribute vec2 aPosition;
-attribute vec2 aTexCoord;
-varying vec2 vTexCoord;
+#version 130
+in vec2 aPosition;
+in vec2 aTexCoord;
+out vec2 vTexCoord;
 uniform mat4 uModelMatrix;
 
 void main()
@@ -29,27 +30,31 @@ void main()
 
 static const std::string FRAGMENT_SHADER_SOURCE =
 R"EOF(
-varying vec2 vTexCoord;
-uniform sampler2D Sampler;
+#version 130
+in vec2 vTexCoord;
+uniform sampler2DRect Sampler;
+out vec4 oColor;
 
 void main()
 {
-   gl_FragColor = texture2D(Sampler, vTexCoord);
+   oColor = texture(Sampler, vTexCoord);
 }
 )EOF";
 
 static const std::string YCoCg_FRAGMENT_SHADER_SOURCE =
 R"EOF(
-varying vec2 vTexCoord;
-uniform sampler2D Sampler;
+#version 130
+in vec2 vTexCoord;
+uniform sampler2DRect Sampler;
+out vec4 oColor;
 
 void main()
 {
-    vec4 color = texture2D(Sampler, vTexCoord);
+    vec4 color = texture(Sampler, vTexCoord);
     float Co = color.x - ( 0.5 * 256.0 / 255.0 );
     float Cg = color.y - ( 0.5 * 256.0 / 255.0 );
     float Y = color.w;
-    gl_FragColor = vec4( Y + Co - Cg, Y + Cg, Y - Co - Cg, color.a );
+    oColor = vec4( Y + Co - Cg, Y + Cg, Y - Co - Cg, color.a );
 }
 )EOF";
 
@@ -59,7 +64,7 @@ const int NUM_MOVIES = 4;
 std::vector< glvideo::Movie::ref > movies;
 glvideo::Context::ref context;
 
-static void BuildGeometry( float aspect );
+static void BuildGeometry( int width, int height );
 
 static GLuint LoadEffect( bool isYCoCg = false );
 
@@ -145,11 +150,14 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-    string filename = "examples/videos/hap-1920x1080-24fps.mov";
+    string filename = "examples/videos/hap-3840x2160-24fps.mov";
 	srand( static_cast< unsigned >( time( 0 ) ) );
 
 	context = glvideo::Context::create( 4 );
-    auto options = glvideo::Movie::Options();
+    auto options = glvideo::Movie::Options()
+        .cpuBufferSize( 24 * 10 ) // 24 fps * 10 seconds
+        .gpuBufferSize( 24 * 5 )
+        ;
 	for ( int i = 0; i < NUM_MOVIES; ++i ) {
 		auto movie = glvideo::Movie::create( context, filename, options );
 		movies.push_back( movie );
@@ -166,7 +174,7 @@ const char *PezInitialize( int width, int height )
 		movie->loop().play();
 	}
 
-    BuildGeometry((float) width / (float) height );
+    BuildGeometry( movies[0]->getWidth(), movies[0]->getHeight() );
 	shader = LoadEffect( movies[0]->getCodec() == "HapY" );
 
 
@@ -174,17 +182,17 @@ const char *PezInitialize( int width, int height )
 }
 
 
-static void BuildGeometry( float aspect )
+static void BuildGeometry( int width, int height )
 {
     float X = COORD_EXTENTS;
     float Y = COORD_EXTENTS;
     float verts[] = {
-            -X, -Y, 0, 1,
-            -X, +Y, 0, 0,
-            +X, +Y, 1, 0,
-            +X, +Y, 1, 0,
-            +X, -Y, 1, 1,
-            -X, -Y, 0, 1,
+            -X, -Y, 0 * width, 1 * height,
+            -X, +Y, 0 * width, 0 * height,
+            +X, +Y, 1 * width, 0 * height,
+            +X, +Y, 1 * width, 0 * height,
+            +X, -Y, 1 * width, 1 * height,
+            -X, -Y, 0 * width, 1 * height,
     };
 
     GLuint vboHandle;

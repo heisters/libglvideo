@@ -1,6 +1,6 @@
 #include "Frame.h"
 #include <algorithm>
-#include "gl_includes.h"
+#include "gl_load.h"
 
 using namespace glvideo;
 using namespace std;

@@ -1,11 +1,12 @@
 #include <iostream>
 #include "FrameTexture.h"
 #include "gl_includes.h"
+#include "gl_load.h"
 
 using namespace glvideo;
 
 FrameTexture::FrameTexture( GLuint pbo, GLsizei imageSize, Format format ) :
-        m_target( GL_TEXTURE_2D )
+        m_target( GL_TEXTURE_RECTANGLE )
 {
     glGenTextures( 1, &m_tex );
     glBindTexture( m_target, m_tex );
