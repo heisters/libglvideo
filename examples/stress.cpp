@@ -102,8 +102,20 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         lastReportTime = now;
 
 		for ( auto & movie : movies ) {
-			if ( movie->isPlaying() && randf() < 0.5f ) movie->stop();
-			else if ( ! movie->isPlaying() && randf() < 0.75f ) movie->play();
+            if ( randf() < 0.5f ) {
+                movie->seek( randf() * movie->getDuration() );
+                DBOUT( "SEEK" );
+            }
+            else {
+                if ( movie->isPlaying() && randf() < 0.5f ) {
+                    movie->stop();
+                    DBOUT( "STOP" );
+                }
+                else if ( ! movie->isPlaying() && randf() < 0.75f ) {
+                    movie->play();
+                    DBOUT( "PLAY" );
+                }
+            }
 		}
     }
 }

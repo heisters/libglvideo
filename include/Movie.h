@@ -120,7 +120,11 @@ public:
 	Movie & loop( bool loop = true ) { m_loop = loop; return *this; }
 
 	/// Set the playhead to the beginning of the video.
-	Movie & seekToStart() { m_readSample = 0; m_cpuFrameBuffer.clear(); return *this; }
+    Movie & seekToStart();
+
+    /// Set the playhead to a given \a time. Times greater than the movie
+    /// length will wrap.
+    Movie & seek( seconds time );
 
     /// Returns the current Frame.
     FrameTexture::ref getCurrentFrame() const;

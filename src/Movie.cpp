@@ -1,6 +1,7 @@
 #include "Movie.h"
 #include "Ap4.h"
 #include <sstream>
+#include <cmath>
 #include "decoders/jpeg.h"
 #include "decoders/hap.h"
 #include "gl_load.h"
@@ -298,3 +299,23 @@ Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
 
 
 
+Movie & Movie::seekToStart()
+{
+    m_readSample = 0;
+
+    m_cpuFrameBuffer.clear();
+    m_currentFrame = nullptr;
+    
+    return *this;
+}
+
+Movie & Movie::seek( seconds time )
+{
+    auto d = getDuration();
+    m_readSample = fmod( time, d ) / d * m_numSamples;
+
+    m_cpuFrameBuffer.clear();
+    m_currentFrame = nullptr;
+
+    return *this;
+}
