@@ -2,9 +2,9 @@
 #include "Ap4.h"
 #include <sstream>
 #include <cmath>
+#include "gl_includes.h"
 #include "decoders/jpeg.h"
 #include "decoders/hap.h"
-#include "gl_load.h"
 
 using namespace std;
 using namespace glvideo;

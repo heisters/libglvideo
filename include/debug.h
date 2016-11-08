@@ -1,7 +1,6 @@
 #pragma once
 
 #include "platform.h"
-#include "gl_includes.h"
 #include <chrono>
 #include <thread>
 #if defined( GLVIDEO_MAC )

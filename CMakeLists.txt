@@ -95,7 +95,7 @@ set(SOURCE_FILES
     include/debug.h
     include/glvideo.h
     include/gl_includes.h
-    src/gl_load.cpp include/gl_load.h
+    include/glad/glad.h src/glad.c
     include/concurrency.h
     src/FrameTexture.cpp include/FrameTexture.h
     src/Movie.cpp include/Movie.h

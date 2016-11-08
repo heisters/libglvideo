@@ -1,8 +1,10 @@
 #pragma once
 
 #include <memory>
-#include "gl_includes.h"
 #include "FrameTexture.h"
+
+typedef uint64_t GLuint64;
+typedef struct __GLsync *GLsync;
 
 namespace glvideo {
 

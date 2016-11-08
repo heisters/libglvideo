@@ -165,6 +165,8 @@ const char *PezInitialize( int width, int height )
     string filename = "examples/videos/hap-3840x2160-24fps.mov";
 	srand( static_cast< unsigned >( time( 0 ) ) );
 
+    DBOUT( "OpenGL version: " << glGetString( GL_VERSION ) );
+
 	context = glvideo::Context::create( 4 );
     auto options = glvideo::Movie::Options();
 	for ( int i = 0; i < NUM_MOVIES; ++i ) {

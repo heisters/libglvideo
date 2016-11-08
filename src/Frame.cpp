@@ -1,7 +1,7 @@
 #include "Frame.h"
+#include "gl_includes.h"
 #include <algorithm>
 #include <chrono>
-#include "gl_load.h"
 
 using namespace glvideo;
 using namespace std;
@@ -38,7 +38,7 @@ bool Frame::bufferTexture( GLuint pbo )
         m_pbo = pbo;
 
         if ( m_sync ) glDeleteSync( m_sync );
-        m_sync = (GLsync)glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0L );
+        m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0L );
         glFlush();
 
         return true;
@@ -66,7 +66,7 @@ bool Frame::waitForBuffer( GLuint64 timeoutNanoseconds )
     if ( m_pbo == 0 ) return false;
     if ( ! m_sync ) return false;
 
-    GLenum status = (GLenum)glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0L );
+    GLenum status = glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0L );
     switch ( status ) {
     case GL_CONDITION_SATISFIED:
     case GL_ALREADY_SIGNALED:

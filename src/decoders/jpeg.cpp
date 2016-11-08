@@ -4,6 +4,7 @@
 
 #include <stb_image.h>
 #include <Ap4DataBuffer.h>
+#include "gl_includes.h"
 
 using namespace glvideo;
 

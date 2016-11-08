@@ -12,7 +12,6 @@
 #include "Context.h"
 #include "Decoder.h"
 #include "concurrency.h"
-#include "gl_includes.h"
 
 class AP4_File;
 class AP4_Track;

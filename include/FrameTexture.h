@@ -1,7 +1,10 @@
 #pragma once
 
 #include <memory>
-#include "gl_includes.h"
+
+typedef int GLsizei;
+typedef unsigned int GLenum;
+typedef unsigned int GLuint;
 
 namespace glvideo {
 
@@ -78,7 +81,7 @@ public:
 	void setOwnsTexture( bool owns = true ) { m_ownsTexture = owns; }
 
 private:
-    GLenum m_target = GL_TEXTURE_2D;
+    GLenum m_target;
     GLuint m_tex = 0;
 	bool m_ownsTexture = true;
 };
