@@ -126,6 +126,9 @@ public:
     /// length will wrap.
     Movie & seek( seconds time );
 
+    /// Set the playhead to a given \a sample number.
+    Movie & seekToSample( size_t sample );
+
     /// Returns the current Frame.
     FrameTexture::ref getCurrentFrame() const;
 

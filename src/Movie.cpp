@@ -220,9 +220,9 @@ void Movie::update()
         const auto nextFrameTime = m_lastFrameQueuedAt + spf;
 
         auto now = clock::now();
-        if ( now >= nextFrameTime && ! m_gpuFrameBuffer.empty() ) {
+        if ( ( now >= nextFrameTime || m_currentFrame == nullptr ) && ! m_gpuFrameBuffer.empty() ) {
             Frame::ref frame;
-            if ( m_gpuFrameBuffer.try_pop( &frame ) && frame->isBuffered() ) {
+            if ( m_gpuFrameBuffer.try_pop( &frame ) && ( frame->isBuffered() || ( m_currentFrame == nullptr && frame->waitForBuffer( spf.count() ) ) ) ) {
                 frame->createTexture();
                 m_currentFrame = frame->getTexture();
                 m_currentSample = frame->getSample();
@@ -301,21 +301,22 @@ Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
 
 Movie & Movie::seekToStart()
 {
-    m_readSample = 0;
-
-    m_cpuFrameBuffer.clear();
-    m_currentFrame = nullptr;
-    
-    return *this;
+    return seekToSample( 0 );
 }
 
 Movie & Movie::seek( seconds time )
 {
     auto d = getDuration();
-    m_readSample = fmod( time, d ) / d * m_numSamples;
+    return seekToSample( fmod( time, d ) / d * m_numSamples );
+}
+
+Movie & Movie::seekToSample( size_t sample )
+{
+    m_readSample = sample;
 
     m_cpuFrameBuffer.clear();
     m_currentFrame = nullptr;
+    bufferNextCPUSample();
 
     return *this;
 }

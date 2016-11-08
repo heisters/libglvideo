@@ -18,6 +18,7 @@ typedef GLenum( APIENTRY * PFNGLCLIENTWAITSYNCPROC ) ( GLsync sync, GLbitfield f
 #define GL_STATIC_DRAW                      0x88E4
 #define GL_WRITE_ONLY                       0x88B9
 #define GL_INVALID_FRAMEBUFFER_OPERATION    0x0506
+#define GL_SYNC_GPU_COMMANDS_COMPLETE       0x9117
 #define GL_SYNC_FLUSH_COMMANDS_BIT          0x00000001
 #define GL_UNSIGNALED                       0x9118
 #define GL_SIGNALED                         0x9119

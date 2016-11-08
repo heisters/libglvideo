@@ -25,6 +25,8 @@ public:
 
 
     bool isBuffered();
+    bool waitForBuffer( double timeoutSeconds = 1.0 / 60.0 );
+    bool waitForBuffer( GLuint64 timeoutNanoseconds );
     bool bufferTexture( GLuint pbo );
     void createTexture();
 
