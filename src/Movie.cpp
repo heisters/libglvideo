@@ -213,21 +213,22 @@ void Movie::waitForJobsToFinish()
 
 void Movie::update()
 {
+    if ( ! m_currentFrame && m_cpuFrameBuffer.empty() ) bufferNextCPUSample();
     bufferNextGPUSample();
 
-    {
-        const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
-        const auto nextFrameTime = m_lastFrameQueuedAt + spf;
+    const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
+    const auto nextFrameTime = m_lastFrameQueuedAt + spf;
 
-        auto now = clock::now();
-        if ( ( now >= nextFrameTime || m_currentFrame == nullptr ) && ! m_gpuFrameBuffer.empty() ) {
-            Frame::ref frame;
-            if ( m_gpuFrameBuffer.try_pop( &frame ) && ( frame->isBuffered() || ( m_currentFrame == nullptr && frame->waitForBuffer( spf.count() ) ) ) ) {
-                frame->createTexture();
-                m_currentFrame = frame->getTexture();
-                m_currentSample = frame->getSample();
-                m_lastFrameQueuedAt = now;
-            }
+    auto now = clock::now();
+    if ( ( now >= nextFrameTime || m_currentFrame == nullptr ) && ! m_gpuFrameBuffer.empty() ) {
+        Frame::ref frame;
+        if ( m_gpuFrameBuffer.try_pop( &frame ) ) {
+            if ( ! m_currentFrame ) frame->waitForBuffer();
+
+            frame->createTexture();
+            m_currentFrame = frame->getTexture();
+            m_currentSample = frame->getSample();
+            m_lastFrameQueuedAt = now;
         }
     }
 }
@@ -316,7 +317,8 @@ Movie & Movie::seekToSample( size_t sample )
 
     m_cpuFrameBuffer.clear();
     m_currentFrame = nullptr;
-    bufferNextCPUSample();
+
+    update();
 
     return *this;
 }

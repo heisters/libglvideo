@@ -66,7 +66,7 @@ bool Frame::waitForBuffer( GLuint64 timeoutNanoseconds )
     if ( m_pbo == 0 ) return false;
     if ( ! m_sync ) return false;
 
-    GLenum status = glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0L );
+    GLenum status = glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, timeoutNanoseconds );
     switch ( status ) {
     case GL_CONDITION_SATISFIED:
     case GL_ALREADY_SIGNALED:
@@ -78,5 +78,5 @@ bool Frame::waitForBuffer( GLuint64 timeoutNanoseconds )
         break;
     }
 
-    return true; // FIXME!
+    return false;
 }
