@@ -135,12 +135,12 @@ INT WINAPI WinMain(HINSTANCE hInst, HINSTANCE ignoreMe0, LPSTR ignoreMe1, INT ig
         wglSwapIntervalEXT(0);
     }
 
-    if (PEZ_FORWARD_COMPATIBLE_GL && glewIsSupported("GL_VERSION_3_0"))
+    if (PEZ_FORWARD_COMPATIBLE_GL && glewIsSupported("GL_VERSION_3_2"))
     {
         const int contextAttribs[] =
         {
             WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-            WGL_CONTEXT_MINOR_VERSION_ARB, 0,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 2,
             WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
             0
         };
