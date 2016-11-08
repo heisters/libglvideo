@@ -119,14 +119,23 @@ public:
 	Movie & loop( bool loop = true ) { m_loop = loop; return *this; }
 
 	/// Set the playhead to the beginning of the video.
-    Movie & seekToStart();
+    /// If \a sync is true, the movie will ensure a frame is immediately ready
+    /// for playback by calling update(). Pass false if you plan to call update
+    /// before asking for a new frame.
+    Movie & seekToStart( bool sync = true );
 
     /// Set the playhead to a given \a time. Times greater than the movie
     /// length will wrap.
-    Movie & seek( seconds time );
+    /// If \a sync is true, the movie will ensure a frame is immediately ready
+    /// for playback by calling update(). Pass false if you plan to call update
+    /// before asking for a new frame.
+    Movie & seek( seconds time, bool sync = true );
 
     /// Set the playhead to a given \a sample number.
-    Movie & seekToSample( size_t sample );
+    /// If \a sync is true, the movie will ensure a frame is immediately ready
+    /// for playback by calling update(). Pass false if you plan to call update
+    /// before asking for a new frame.
+    Movie & seekToSample( size_t sample, bool sync = true );
 
     /// Returns the current Frame.
     FrameTexture::ref getCurrentFrame() const;
@@ -134,7 +143,9 @@ public:
     /// Call this in the application update method.
     /// Buffers frames to the GPU in the current OpenGL context and queues the
     /// next frame.
-    void update();
+    /// If \a sync is true, and there is not currently a frame available,
+    /// update will block the current thread until a frame is available.
+    void update( bool sync = true );
 
     /// Fill buffers with samples.
     void prebuffer();
