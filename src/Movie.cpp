@@ -219,13 +219,14 @@ void Movie::waitForJobsToFinish()
 
 void Movie::update( bool sync )
 {
-    if ( ! m_currentFrame && m_cpuFrameBuffer.empty() ) bufferNextCPUSample();
+    const bool refresh = m_currentFrame == nullptr || m_forceRefreshCurrentFrame;
+    if ( refresh && m_cpuFrameBuffer.empty() ) bufferNextCPUSample();
     bufferNextGPUSample();
 
     const auto nextFrameAt = m_lastFrameQueuedAt + chrono::duration_cast< clock::duration >( m_spf );
 
     auto now = clock::now();
-    if ( ( now >= nextFrameAt || m_currentFrame == nullptr ) && ! m_gpuFrameBuffer.empty() ) {
+    if ( ( now >= nextFrameAt || refresh ) && ! m_gpuFrameBuffer.empty() ) {
         Frame::ref frame;
         if ( m_gpuFrameBuffer.try_pop( &frame ) ) {
             if ( ! m_currentFrame && sync ) frame->waitForBuffer();
@@ -233,6 +234,7 @@ void Movie::update( bool sync )
             frame->createTexture();
             m_currentFrame = frame->getTexture();
             m_currentSample = frame->getSample();
+            m_forceRefreshCurrentFrame = false;
             m_lastFrameQueuedAt = nextFrameAt;
         }
     }
@@ -323,7 +325,7 @@ Movie & Movie::seekToSample( size_t sample, bool sync )
     m_readSample = sample;
 
     m_cpuFrameBuffer.clear();
-    m_currentFrame = nullptr;
+    m_forceRefreshCurrentFrame = true;
 
     if ( sync ) update( sync );
 

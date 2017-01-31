@@ -101,12 +101,10 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         DBOUT( "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" );
         lastReportTime = now;
 
-        if ( randf() < 0.1f ) {
-            DBOUT( "SEEK" );
-            float f = randf();
-            for ( auto & movie : movies ) {
-                movie->stop().play();
-            }
+        float f = randf();
+        for ( auto & movie : movies ) {
+            if ( movie->isPlaying() ) movie->stop().seek( f * movie->getDuration(), false);
+            else movie->play();
         }
     }
 }

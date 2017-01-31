@@ -171,6 +171,7 @@ private:
     std::vector< GLuint > m_pbos;
     size_t m_currentPBO = 0;
     size_t m_id = 0;
+    bool m_forceRefreshCurrentFrame = false;
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.
     Frame::ref getFrame( AP4_Track * track, size_t i_sample ) const;
