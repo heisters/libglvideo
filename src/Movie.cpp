@@ -165,9 +165,9 @@ Movie & Movie::play()
 	if ( m_isPlaying ) return *this;
 
 
-	m_lastFrameQueuedAt = clock::now();
+	m_lastFrameQueuedAt = clock::now() - chrono::duration_cast< clock::duration >( m_spf );
 	m_isPlaying = true;
-	queueRead();
+    if ( ! m_jobsPending ) queueRead();
 
 	return *this;
 }
@@ -222,7 +222,7 @@ void Movie::update( bool sync )
     if ( ! m_currentFrame && m_cpuFrameBuffer.empty() ) bufferNextCPUSample();
     bufferNextGPUSample();
 
-    const decltype(m_lastFrameQueuedAt) nextFrameAt = m_lastFrameQueuedAt + chrono::duration_cast< clock::duration >( m_spf );
+    const auto nextFrameAt = m_lastFrameQueuedAt + chrono::duration_cast< clock::duration >( m_spf );
 
     auto now = clock::now();
     if ( ( now >= nextFrameAt || m_currentFrame == nullptr ) && ! m_gpuFrameBuffer.empty() ) {
