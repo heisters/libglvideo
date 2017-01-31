@@ -6,8 +6,12 @@
 #include "decoders/jpeg.h"
 #include "decoders/hap.h"
 
+#include "debug.h"
+
 using namespace std;
 using namespace glvideo;
+
+static size_t NEXT_ID = 1;
 
 
 Movie::Movie( const Context::ref &context, const string &filename, const Options &options ) :
@@ -15,7 +19,8 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
 	m_options( options ),
 	m_cpuFrameBuffer( options.cpuBufferSize() ),
     m_pbos( options.gpuBufferSize(), 0 ),
-    m_gpuFrameBuffer( options.gpuBufferSize() )
+    m_gpuFrameBuffer( options.gpuBufferSize() ),
+    m_id( NEXT_ID++ )
 {
     AP4_Result result;
     AP4_ByteStream *input = NULL;
@@ -52,7 +57,8 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
             m_width = (uint32_t) ((double)m_videoTrack->GetWidth() / double( 1 << 16 ) );
             m_height = (uint32_t) ((double)m_videoTrack->GetHeight() / double( 1 << 16 ) );
 			m_numSamples = m_videoTrack->GetSampleCount();
-            m_fps = decltype( m_fps )( (float) 1000 * m_numSamples / (float)m_videoTrack->GetDurationMs() );
+            m_fps = 1000.f * (float)m_numSamples / (float)m_videoTrack->GetDurationMs();
+            m_spf = decltype( m_spf )( 1.f / m_fps );
             m_codec = getTrackCodec( m_videoTrack );
         }
 
@@ -190,7 +196,7 @@ void Movie::read()
 
     bufferNextCPUSample();
 
-    // Schedule next read job, or notify waiting thread that all jobs
+    // Schedule next read job or notify waiting thread that all jobs
     // have finished.
 
 	if ( m_isPlaying ) {
@@ -216,11 +222,10 @@ void Movie::update( bool sync )
     if ( ! m_currentFrame && m_cpuFrameBuffer.empty() ) bufferNextCPUSample();
     bufferNextGPUSample();
 
-    const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
-    const auto nextFrameTime = m_lastFrameQueuedAt + spf;
+    const decltype(m_lastFrameQueuedAt) nextFrameAt = m_lastFrameQueuedAt + chrono::duration_cast< clock::duration >( m_spf );
 
     auto now = clock::now();
-    if ( ( now >= nextFrameTime || m_currentFrame == nullptr ) && ! m_gpuFrameBuffer.empty() ) {
+    if ( ( now >= nextFrameAt || m_currentFrame == nullptr ) && ! m_gpuFrameBuffer.empty() ) {
         Frame::ref frame;
         if ( m_gpuFrameBuffer.try_pop( &frame ) ) {
             if ( ! m_currentFrame && sync ) frame->waitForBuffer();
@@ -228,7 +233,7 @@ void Movie::update( bool sync )
             frame->createTexture();
             m_currentFrame = frame->getTexture();
             m_currentSample = frame->getSample();
-            m_lastFrameQueuedAt = now;
+            m_lastFrameQueuedAt = nextFrameAt;
         }
     }
 }
@@ -287,7 +292,7 @@ Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
     AP4_DataBuffer sampleData;
 
 
-    if ( AP4_FAILED( track->ReadSample( i_sample, sample, sampleData ))) {
+    if ( AP4_FAILED( track->ReadSample( (AP4_Ordinal)i_sample, sample, sampleData ))) {
 		return nullptr;
     }
 
@@ -308,7 +313,7 @@ Movie & Movie::seekToStart( bool sync )
 Movie & Movie::seek( seconds time, bool sync )
 {
     auto d = getDuration();
-    return seekToSample( fmod( time, d ) / d * m_numSamples, sync );
+    return seekToSample( (size_t)( fmod( time, d ) / d * m_numSamples ), sync );
 }
 
 Movie & Movie::seekToSample( size_t sample, bool sync )

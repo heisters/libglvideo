@@ -95,7 +95,7 @@ public:
 	seconds getRemainingTime() const;
 
     /// Returns the framerate
-    float getFramerate() const { return m_fps.count(); }
+    float getFramerate() const { return m_fps; }
 
     /// Returns the width
     uint32_t getWidth() const { return m_width; }
@@ -161,7 +161,8 @@ private:
     FrameTexture::ref m_currentFrame = nullptr;
     Context::ref m_context = nullptr;
     AP4_Track * m_videoTrack = nullptr;
-    std::chrono::duration< float > m_fps;
+    float m_fps;
+    std::chrono::duration< float > m_spf;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     std::string m_codec;
@@ -169,7 +170,7 @@ private:
 	size_t m_currentSample = 0;
     std::vector< GLuint > m_pbos;
     size_t m_currentPBO = 0;
-
+    size_t m_id = 0;
 
     /// Extracts and decodes the sample with index \a i_sample from track with index \a i_track and returns a Frame.
     Frame::ref getFrame( AP4_Track * track, size_t i_sample ) const;

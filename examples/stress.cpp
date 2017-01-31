@@ -60,7 +60,7 @@ void main()
 
 
 const float COORD_EXTENTS = 1.f;
-const int NUM_MOVIES = 4;
+const int NUM_MOVIES = 9;
 std::vector< glvideo::Movie::ref > movies;
 glvideo::Context::ref context;
 
@@ -101,22 +101,22 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         DBOUT( "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" );
         lastReportTime = now;
 
-		for ( auto & movie : movies ) {
-            if ( randf() < 0.5f ) {
-                movie->seek( randf() * movie->getDuration() );
-                DBOUT( "SEEK" );
-            }
-            else {
-                if ( movie->isPlaying() && randf() < 0.5f ) {
-                    movie->stop();
-                    DBOUT( "STOP" );
-                }
-                else if ( ! movie->isPlaying() && randf() < 0.75f ) {
-                    movie->play();
-                    DBOUT( "PLAY" );
-                }
-            }
-		}
+		//for ( auto & movie : movies ) {
+  //          if ( randf() < 0.5f ) {
+  //              movie->seek( randf() * movie->getDuration() );
+  //              DBOUT( "SEEK" );
+  //          }
+  //          else {
+  //              if ( movie->isPlaying() && randf() < 0.5f ) {
+  //                  movie->stop();
+  //                  DBOUT( "STOP" );
+  //              }
+  //              else if ( ! movie->isPlaying() && randf() < 0.75f ) {
+  //                  movie->play();
+  //                  DBOUT( "PLAY" );
+  //              }
+  //          }
+		//}
     }
 }
 
@@ -127,7 +127,7 @@ void PezRender()
 
     glActiveTexture( GL_TEXTURE0 );
 
-	int n = sqrt( movies.size() );
+	int n = (int)sqrt( movies.size() );
 	float size = COORD_EXTENTS * 2.f / (float)n;
 	int i = 0;
 	for ( auto & movie : movies ) {
@@ -162,7 +162,7 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-    string filename = "examples/videos/hap-3840x2160-24fps.mov";
+    string filename = "examples/videos/hap-1920x1080-24fps.mov";
 	srand( static_cast< unsigned >( time( 0 ) ) );
 
     DBOUT( "OpenGL version: " << glGetString( GL_VERSION ) );
@@ -198,12 +198,12 @@ static void BuildGeometry( int width, int height )
     float X = COORD_EXTENTS;
     float Y = COORD_EXTENTS;
     float verts[] = {
-            -X, -Y, 0 * width, 1 * height,
-            -X, +Y, 0 * width, 0 * height,
-            +X, +Y, 1 * width, 0 * height,
-            +X, +Y, 1 * width, 0 * height,
-            +X, -Y, 1 * width, 1 * height,
-            -X, -Y, 0 * width, 1 * height,
+            -X, -Y, 0.f * (float)width, 1.f * (float)height,
+            -X, +Y, 0.f * (float)width, 0.f * (float)height,
+            +X, +Y, 1.f * (float)width, 0.f * (float)height,
+            +X, +Y, 1.f * (float)width, 0.f * (float)height,
+            +X, -Y, 1.f * (float)width, 1.f * (float)height,
+            -X, -Y, 0.f * (float)width, 1.f * (float)height,
     };
 
     GLuint vboHandle;
