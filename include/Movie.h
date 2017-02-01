@@ -51,7 +51,7 @@ public:
         size_t &gpuBufferSize() { return m_gpuBufferSize; }
 
     private:
-        size_t m_cpuBufferSize = 10;
+        size_t m_cpuBufferSize = 2;
         size_t m_gpuBufferSize = 2;
     };
 
@@ -119,23 +119,14 @@ public:
 	Movie & loop( bool loop = true ) { m_loop = loop; return *this; }
 
 	/// Set the playhead to the beginning of the video.
-    /// If \a sync is true, the movie will ensure a frame is immediately ready
-    /// for playback by calling update(). Pass false if you plan to call update
-    /// before asking for a new frame.
-    Movie & seekToStart( bool sync = true );
+    Movie & seekToStart();
 
     /// Set the playhead to a given \a time. Times greater than the movie
     /// length will wrap.
-    /// If \a sync is true, the movie will ensure a frame is immediately ready
-    /// for playback by calling update(). Pass false if you plan to call update
-    /// before asking for a new frame.
-    Movie & seek( seconds time, bool sync = true );
+    Movie & seek( seconds time );
 
     /// Set the playhead to a given \a sample number.
-    /// If \a sync is true, the movie will ensure a frame is immediately ready
-    /// for playback by calling update(). Pass false if you plan to call update
-    /// before asking for a new frame.
-    Movie & seekToSample( size_t sample, bool sync = true );
+    Movie & seekToSample( size_t sample );
 
     /// Returns the current Frame.
     FrameTexture::ref getCurrentFrame() const;
@@ -143,9 +134,7 @@ public:
     /// Call this in the application update method.
     /// Buffers frames to the GPU in the current OpenGL context and queues the
     /// next frame.
-    /// If \a sync is true, and there is not currently a frame available,
-    /// update will block the current thread until a frame is available.
-    void update( bool sync = true );
+    void update();
 
     /// Fill buffers with samples.
     void prebuffer();

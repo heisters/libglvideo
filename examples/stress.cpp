@@ -92,7 +92,6 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         frameTimes.pop_front();
     }
 
-    for ( auto & movie : movies ) movie->update();
 
     auto now = hrclock::now();
     if ( chrono::duration_cast<chrono::seconds>( now - lastReportTime ).count() > 1 ) {
@@ -103,10 +102,13 @@ void PezUpdate( unsigned int elapsedMilliseconds )
 
         float f = randf();
         for ( auto & movie : movies ) {
-            if ( movie->isPlaying() ) movie->stop().seek( f * movie->getDuration(), false);
+            if ( movie->isPlaying() ) movie->stop().seek( f * movie->getDuration() );
             else movie->play();
         }
     }
+
+    for ( auto & movie : movies ) if ( movie->isPlaying() ) movie->update();
+
 }
 
 

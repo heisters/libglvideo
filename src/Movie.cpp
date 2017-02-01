@@ -217,9 +217,10 @@ void Movie::waitForJobsToFinish()
 	}
 }
 
-void Movie::update( bool sync )
+void Movie::update()
 {
     const bool refresh = m_currentFrame == nullptr || m_forceRefreshCurrentFrame;
+
     if ( refresh && m_cpuFrameBuffer.empty() ) bufferNextCPUSample();
     bufferNextGPUSample();
 
@@ -229,13 +230,12 @@ void Movie::update( bool sync )
     if ( ( now >= nextFrameAt || refresh ) && ! m_gpuFrameBuffer.empty() ) {
         Frame::ref frame;
         if ( m_gpuFrameBuffer.try_pop( &frame ) ) {
-            if ( ! m_currentFrame && sync ) frame->waitForBuffer();
 
             frame->createTexture();
-            m_currentFrame = frame->getTexture();
-            m_currentSample = frame->getSample();
-            m_forceRefreshCurrentFrame = false;
-            m_lastFrameQueuedAt = nextFrameAt;
+            m_currentFrame              = frame->getTexture();
+            m_currentSample             = frame->getSample();
+            m_forceRefreshCurrentFrame  = false;
+            m_lastFrameQueuedAt         = nextFrameAt;
         }
     }
 }
@@ -307,18 +307,18 @@ Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
 
 
 
-Movie & Movie::seekToStart( bool sync )
+Movie & Movie::seekToStart()
 {
-    return seekToSample( 0, sync );
+    return seekToSample( 0 );
 }
 
-Movie & Movie::seek( seconds time, bool sync )
+Movie & Movie::seek( seconds time )
 {
     auto d = getDuration();
-    return seekToSample( (size_t)( fmod( time, d ) / d * m_numSamples ), sync );
+    return seekToSample( (size_t)( fmod( time, d ) / d * m_numSamples ) );
 }
 
-Movie & Movie::seekToSample( size_t sample, bool sync )
+Movie & Movie::seekToSample( size_t sample )
 {
     if ( sample == m_readSample ) return *this;
 
@@ -326,8 +326,6 @@ Movie & Movie::seekToSample( size_t sample, bool sync )
 
     m_cpuFrameBuffer.clear();
     m_forceRefreshCurrentFrame = true;
-
-    if ( sync ) update( sync );
 
     return *this;
 }
