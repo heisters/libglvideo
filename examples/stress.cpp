@@ -60,7 +60,7 @@ void main()
 
 
 const float COORD_EXTENTS = 1.f;
-const int NUM_MOVIES = 9;
+const int NUM_MOVIES = 4;
 std::vector< glvideo::Movie::ref > movies;
 glvideo::Context::ref context;
 
@@ -100,11 +100,11 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         DBOUT( "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" );
         lastReportTime = now;
 
-        float f = randf();
-        for ( auto & movie : movies ) {
-            if ( movie->isPlaying() ) movie->stop().seek( f * movie->getDuration() );
-            else movie->play();
-        }
+        //float f = randf();
+        //for ( auto & movie : movies ) {
+        //    if ( movie->isPlaying() ) movie->stop().seek( f * movie->getDuration() );
+        //    else movie->play();
+        //}
     }
 
     for ( auto & movie : movies ) if ( movie->isPlaying() ) movie->update();
