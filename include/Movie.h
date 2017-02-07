@@ -36,6 +36,14 @@ public:
     public:
         Options() {}
 
+        /// Set whether the movie should pre-buffer frames on load. Defaults to
+        /// true, but it's useful to disable if you're not going to play the
+        /// movie before seeking or doing something else that would invalidate
+        /// the buffer anyway.
+        Options &prebuffer( bool prebuffer ) { m_prebuffer = prebuffer; return *this; }
+        bool prebuffer() const { return m_prebuffer; }
+        bool &prebuffer() { return m_prebuffer; }
+
         /// Set the number of \a frames to be buffered in CPU memory by the
         /// movie. Higher values result in smoother playback, but use more
         /// CPU memory.
@@ -53,6 +61,7 @@ public:
     private:
         size_t m_cpuBufferSize = 2;
         size_t m_gpuBufferSize = 2;
+        bool m_prebuffer = true;
     };
 
 

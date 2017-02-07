@@ -93,7 +93,7 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
     // Initialize GPU resources
     glGenBuffers( (GLsizei)m_pbos.size(), m_pbos.data() );
 
-    prebuffer();
+    if ( options.prebuffer() ) prebuffer();
 }
 
 Movie::~Movie()
