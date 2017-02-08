@@ -85,6 +85,10 @@ public:
 
     ~Movie();
 
+    Movie( const Movie& ) = delete;
+    Movie& operator=( const Movie& ) = delete;
+
+
     /// Returns a string representation of the container format (eg. "qt 512").
     std::string getFormat() const;
 

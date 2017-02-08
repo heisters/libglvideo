@@ -6,8 +6,6 @@
 #include "decoders/jpeg.h"
 #include "decoders/hap.h"
 
-#include "debug.h"
-
 using namespace std;
 using namespace glvideo;
 
@@ -245,8 +243,7 @@ void Movie::bufferNextCPUSample()
     if ( ! m_cpuFrameBuffer.is_full() && m_readSample < m_numSamples ) {
 
         auto frame = getFrame( m_videoTrack, m_readSample );
-        if ( frame ) {
-            m_cpuFrameBuffer.push( frame );
+        if ( frame && m_cpuFrameBuffer.try_push( frame ) ) {
 
             m_readSample++;
             if ( m_loop ) m_readSample = m_readSample % m_numSamples;
@@ -260,8 +257,9 @@ void Movie::bufferNextGPUSample()
         Frame::ref frame;
         if ( m_cpuFrameBuffer.try_pop( &frame ) ) {
             frame->bufferTexture( m_pbos[ m_currentPBO ] );
-            m_gpuFrameBuffer.push( frame );
-            m_currentPBO = ( m_currentPBO + 1 ) % m_pbos.size();
+            if ( m_gpuFrameBuffer.try_push( frame ) ) {
+                m_currentPBO = ( m_currentPBO + 1 ) % m_pbos.size();
+            }
         }
     }
 }

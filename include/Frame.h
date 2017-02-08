@@ -20,6 +20,10 @@ public:
     }
 
     Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::Format texFormat = FrameTexture::Format() );
+    ~Frame();
+
+    Frame( const Frame& ) = delete;
+    Frame& operator=( const Frame& ) = delete;
 
 
     bool hasTexture() const { return *m_ftex; }
@@ -37,7 +41,7 @@ public:
     void setSample( size_t sample ) { m_sample = sample; }
 private:
     size_t                              m_sample = 0;
-    std::unique_ptr< unsigned char >    m_texData = nullptr;
+    std::unique_ptr< unsigned char[] >  m_texData = nullptr;
     GLsizei                             m_texSize = 0;
     FrameTexture::Format                m_texFormat = FrameTexture::Format();
     FrameTexture::ref                   m_ftex = nullptr;
