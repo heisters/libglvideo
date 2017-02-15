@@ -260,7 +260,8 @@ void Movie::bufferNextGPUSample()
 
 void Movie::prebuffer()
 {
-    m_context->queueJob( bind( &Movie::doPrebufferWork, this ) );
+    doPrebufferWork();
+    //m_context->queueJob( bind( &Movie::doPrebufferWork, this ) );
 }
 
 void Movie::doPrebufferWork()

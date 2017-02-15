@@ -12,48 +12,58 @@ using namespace std;
 
 static const std::string VERTEX_SHADER_SOURCE =
         R"EOF(
-attribute vec2 Position;
-attribute vec2 InCoord;
-varying vec2 OutCoord;
+#version 410
+in vec2 aPosition;
+in vec2 aTexCoord;
+out vec2 vTexCoord;
+uniform mat4 uModelMatrix;
 
 void main()
 {
-    OutCoord = InCoord;
-    gl_Position = vec4(Position, 0, 1);
+    vTexCoord = aTexCoord;
+    gl_Position = uModelMatrix * vec4(aPosition, 0, 1);
 }
 )EOF";
 
 static const std::string FRAGMENT_SHADER_SOURCE =
-R"EOF(
-varying vec2 OutCoord;
-uniform sampler2D Sampler;
+        R"EOF(
+#version 410
+in vec2 vTexCoord;
+uniform sampler2D uTexture;
+out vec4 oColor;
 
 void main()
 {
-   gl_FragColor = texture2D(Sampler, OutCoord);
+   oColor = texture(uTexture, vTexCoord);
 }
 )EOF";
 
 static const std::string YCoCg_FRAGMENT_SHADER_SOURCE =
         R"EOF(
-varying vec2 OutCoord;
-uniform sampler2D Sampler;
+#version 410
+in vec2 vTexCoord;
+uniform sampler2D uTexture;
+out vec4 oColor;
 
 void main()
 {
-    vec4 color = texture2D(Sampler, OutCoord);
+    vec4 color = texture(uTexture, vTexCoord);
     float Co = color.x - ( 0.5 * 256.0 / 255.0 );
     float Cg = color.y - ( 0.5 * 256.0 / 255.0 );
     float Y = color.w;
-    gl_FragColor = vec4( Y + Co - Cg, Y + Cg, Y - Co - Cg, color.a );
+    //oColor = vec4( Y + Co - Cg, Y + Cg, Y - Co - Cg, color.a );
+oColor = vec4(1.0, 0.0, 0.0, 1.0);
 }
 )EOF";
+
 
 
 glvideo::Movie::ref movie;
 glvideo::Context::ref context;
 
-static void BuildGeometry( float aspect );
+const float COORD_EXTENTS = 1.f;
+
+static void BuildGeometry( int width, int height );
 
 static void LoadEffect( bool isYCoCg = false );
 
@@ -86,6 +96,8 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         DBOUT( "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" )
         lastReportTime = now;
     }
+
+    DBGL;
 }
 
 
@@ -100,7 +112,7 @@ void PezRender()
 		glDrawArrays( GL_TRIANGLES, 0, 6 );
 	}
 
-	checkGlError( __FILE__, __LINE__ );
+    DBGL;
 }
 
 const char *PezInitialize( int width, int height )
@@ -111,7 +123,7 @@ const char *PezInitialize( int width, int height )
     movie = glvideo::Movie::create( context, filename );
 
 
-    BuildGeometry((float) width / (float) height );
+    BuildGeometry( movie->getWidth(), movie->getHeight() );
 	LoadEffect( movie->getCodec() == "HapY" );
 
     DBOUT( "Format: " << movie->getFormat() );
@@ -129,17 +141,17 @@ const char *PezInitialize( int width, int height )
 }
 
 
-static void BuildGeometry( float aspect )
+static void BuildGeometry( int width, int height )
 {
-    float X = 1.f;
-    float Y = 1.f;
+    float X = COORD_EXTENTS;
+    float Y = COORD_EXTENTS;
     float verts[] = {
-            -X, -Y, 0, 1,
-            -X, +Y, 0, 0,
-            +X, +Y, 1, 0,
-            +X, +Y, 1, 0,
-            +X, -Y, 1, 1,
-            -X, -Y, 0, 1,
+            -X, -Y, 0.f, 1.f,
+            -X, +Y, 0.f, 0.f,
+            +X, +Y, 1.f, 0.f,
+            +X, +Y, 1.f, 0.f,
+            +X, -Y, 1.f, 1.f,
+            -X, -Y, 0.f, 1.f,
     };
 
     GLuint vboHandle;
@@ -148,19 +160,17 @@ static void BuildGeometry( float aspect )
     GLenum usage = GL_STATIC_DRAW;
     GLvoid *texCoordOffset = (GLvoid *) (sizeof( float ) * 2);
 
-#if defined(GLVIDEO_MSW)
-	GLuint vao;
+    GLuint vao = 0;
 	glGenVertexArrays( 1, &vao );
 	glBindVertexArray( vao );
-#endif
 
     glGenBuffers( 1, &vboHandle );
-	glBindBuffer( GL_ARRAY_BUFFER, vboHandle );
-	glBufferData( GL_ARRAY_BUFFER, vboSize, verts, usage );
-	glVertexAttribPointer( PositionSlot, 2, GL_FLOAT, GL_FALSE, stride, 0 );
-	glVertexAttribPointer( TexCoordSlot, 2, GL_FLOAT, GL_FALSE, stride, texCoordOffset );
-	glEnableVertexAttribArray( PositionSlot );
-	glEnableVertexAttribArray( TexCoordSlot );
+    glBindBuffer( GL_ARRAY_BUFFER, vboHandle );
+    glBufferData( GL_ARRAY_BUFFER, vboSize, verts, usage );
+    glVertexAttribPointer( PositionSlot, 2, GL_FLOAT, GL_FALSE, stride, 0 );
+    glVertexAttribPointer( TexCoordSlot, 2, GL_FLOAT, GL_FALSE, stride, texCoordOffset );
+    glEnableVertexAttribArray( PositionSlot );
+    glEnableVertexAttribArray( TexCoordSlot );
 }
 
 static void LoadEffect( bool isYCoCg )
@@ -195,8 +205,8 @@ static void LoadEffect( bool isYCoCg )
     programHandle = glCreateProgram();
     glAttachShader( programHandle, vsHandle );
     glAttachShader( programHandle, fsHandle );
-    glBindAttribLocation( programHandle, PositionSlot, "Position" );
-    glBindAttribLocation( programHandle, TexCoordSlot, "InCoord" );
+    glBindAttribLocation( programHandle, PositionSlot, "aPosition" );
+    glBindAttribLocation( programHandle, TexCoordSlot, "aTexCoord" );
     glLinkProgram( programHandle );
     glGetProgramiv( programHandle, GL_LINK_STATUS, &linkSuccess );
     glGetProgramInfoLog( programHandle, sizeof( compilerSpew ), 0, compilerSpew );
@@ -204,6 +214,6 @@ static void LoadEffect( bool isYCoCg )
 
     glUseProgram( programHandle );
 
-    GLint loc = glGetUniformLocation( programHandle, "Sampler" );
+    GLint loc = glGetUniformLocation( programHandle, "uTexture" );
     glUniform1i( loc, 0 );
 }

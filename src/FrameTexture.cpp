@@ -6,7 +6,7 @@
 using namespace glvideo;
 
 FrameTexture::FrameTexture( GLuint pbo, GLsizei imageSize, Format format ) :
-        m_target( GL_TEXTURE_RECTANGLE )
+        m_target( GL_TEXTURE_2D )
 {
     glGenTextures( 1, &m_tex );
     glBindTexture( m_target, m_tex );

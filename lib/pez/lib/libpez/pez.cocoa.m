@@ -38,6 +38,7 @@
         NSOpenGLPFADepthSize, 24,
         NSOpenGLPFAAlphaSize, 8,
         NSOpenGLPFAColorSize, 32,
+        NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
         NSOpenGLPFANoRecovery,
 #if PEZ_ENABLE_MULTISAMPLING
         kCGLPFASampleBuffers, 1,
@@ -81,6 +82,7 @@
             [[self window] setAlphaValue:0.99];
         }
         
+        glewExperimental = GL_TRUE;
         glewInit();
         const char* szTitle = PezInitialize(PEZ_VIEWPORT_WIDTH, PEZ_VIEWPORT_HEIGHT);
         m_didInit = YES;

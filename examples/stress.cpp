@@ -15,7 +15,7 @@ using namespace std;
 
 static const std::string VERTEX_SHADER_SOURCE =
 R"EOF(
-#version 130
+#version 410
 in vec2 aPosition;
 in vec2 aTexCoord;
 out vec2 vTexCoord;
@@ -30,7 +30,7 @@ void main()
 
 static const std::string FRAGMENT_SHADER_SOURCE =
 R"EOF(
-#version 130
+#version 410
 in vec2 vTexCoord;
 uniform sampler2DRect Sampler;
 out vec4 oColor;
@@ -43,7 +43,7 @@ void main()
 
 static const std::string YCoCg_FRAGMENT_SHADER_SOURCE =
 R"EOF(
-#version 130
+#version 410
 in vec2 vTexCoord;
 uniform sampler2DRect Sampler;
 out vec4 oColor;
@@ -196,12 +196,12 @@ static void BuildGeometry( int width, int height )
     float X = COORD_EXTENTS;
     float Y = COORD_EXTENTS;
     float verts[] = {
-            -X, -Y, 0 * width, 1 * height,
-            -X, +Y, 0 * width, 0 * height,
-            +X, +Y, 1 * width, 0 * height,
-            +X, +Y, 1 * width, 0 * height,
-            +X, -Y, 1 * width, 1 * height,
-            -X, -Y, 0 * width, 1 * height,
+            -X, -Y, 0.f * width, 1.f * height,
+            -X, +Y, 0.f * width, 0.f * height,
+            +X, +Y, 1.f * width, 0.f * height,
+            +X, +Y, 1.f * width, 0.f * height,
+            +X, -Y, 1.f * width, 1.f * height,
+            -X, -Y, 0.f * width, 1.f * height,
     };
 
     GLuint vboHandle;

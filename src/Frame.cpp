@@ -36,7 +36,7 @@ bool Frame::bufferTexture( GLuint pbo )
         m_pbo = pbo;
 
         if ( m_sync ) glDeleteSync( m_sync );
-        m_sync = (GLsync)glFenceSync( GL_SYNC_FLUSH_COMMANDS_BIT, 0L );
+        m_sync = (GLsync)glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0L );
 
         return true;
     }
@@ -60,4 +60,6 @@ bool Frame::isBuffered()
         return false;
         break;
     }
+
+    return false;
 }

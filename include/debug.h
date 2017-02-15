@@ -4,10 +4,11 @@
 #include "gl_includes.h"
 #include <chrono>
 #include <thread>
+#include <sstream>
+
 #if defined( GLVIDEO_MAC )
 #include <iostream>
 #elif defined( GLVIDEO_MSW )
-#include <sstream>
 #include <windows.h>
 #endif
 
@@ -28,7 +29,7 @@ DBOUT_STR( os_.str() )\
 #define DBOUT( s ) { DBOUT_INFO( __FILE__, __LINE__, s ); }
 
 
-inline void checkGlError( char * f, int line )
+inline void checkGlError( const char * f, int line )
 {
     GLenum err( glGetError() );
     while ( err != GL_NO_ERROR ) {

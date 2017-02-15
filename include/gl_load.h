@@ -1,5 +1,6 @@
 #include "gl_includes.h"
 
+
 #ifdef GLVIDEO_MSW
 
 typedef void ( APIENTRY * PFNGLCOMPRESSEDTEXIMAGE2DPROC ) ( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data );
@@ -25,7 +26,6 @@ typedef GLenum( APIENTRY * PFNGLCLIENTWAITSYNCPROC ) ( GLsync sync, GLbitfield f
 #define GL_TIMEOUT_EXPIRED                  0x911B
 #define GL_CONDITION_SATISFIED              0x911C
 #define GL_WAIT_FAILED                      0x911D
-#define GL_TEXTURE_RECTANGLE                0x84F5
 
 extern PFNGLCOMPRESSEDTEXIMAGE2DPROC        _glCompressedTexImage2D;
 extern PFNGLBINDBUFFERPROC                  _glBindBuffer;
