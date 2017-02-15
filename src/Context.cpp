@@ -1,8 +1,12 @@
 #include "Context.h"
-#include "gl_load.h"
+#include "gl_includes.h"
 
 using namespace glvideo;
 using namespace std;
+
+#ifndef GL_VERSION_3_2
+#error OpenGL version 3.2 is not supported
+#endif
 
 
 Worker::Worker( concurrent_queue< context_job > & queue ) :
@@ -33,7 +37,13 @@ void Worker::work()
 
 Context::Context( size_t nWorkers )
 {
-    assignGlFunctionPointers();
+    if ( ! gladLoadGL() ) {
+        throw std::runtime_error( "Could not load OpenGL in libglvideo" );
+    }
+
+    if ( ! GLAD_GL_VERSION_3_2 ) {
+        throw std::runtime_error( "OpenGL version 3.2 not loaded" );
+    }
 
 	for ( size_t i = 0; i < nWorkers; ++i ) {
 		m_workers.push_back( make_shared< Worker >( m_jobQueue ) );

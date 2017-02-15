@@ -1,8 +1,10 @@
 #pragma once
 
 #include <memory>
-#include "gl_includes.h"
 #include "FrameTexture.h"
+
+typedef uint64_t GLuint64;
+typedef struct __GLsync *GLsync;
 
 namespace glvideo {
 
@@ -18,6 +20,10 @@ public:
     }
 
     Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::Format texFormat = FrameTexture::Format() );
+    ~Frame();
+
+    Frame( const Frame& ) = delete;
+    Frame& operator=( const Frame& ) = delete;
 
 
     bool hasTexture() const { return *m_ftex; }
@@ -25,6 +31,8 @@ public:
 
 
     bool isBuffered();
+    bool waitForBuffer( double timeoutSeconds = 1.0 / 60.0 );
+    bool waitForBuffer( GLuint64 timeoutNanoseconds );
     bool bufferTexture( GLuint pbo );
     void createTexture();
 

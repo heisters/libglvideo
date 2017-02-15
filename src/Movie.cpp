@@ -2,12 +2,14 @@
 #include "Ap4.h"
 #include <sstream>
 #include <cmath>
+#include "gl_includes.h"
 #include "decoders/jpeg.h"
 #include "decoders/hap.h"
-#include "gl_load.h"
 
 using namespace std;
 using namespace glvideo;
+
+static size_t NEXT_ID = 1;
 
 
 Movie::Movie( const Context::ref &context, const string &filename, const Options &options ) :
@@ -15,7 +17,8 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
 	m_options( options ),
 	m_cpuFrameBuffer( options.cpuBufferSize() ),
     m_pbos( options.gpuBufferSize(), 0 ),
-    m_gpuFrameBuffer( options.gpuBufferSize() )
+    m_gpuFrameBuffer( options.gpuBufferSize() ),
+    m_id( NEXT_ID++ )
 {
     AP4_Result result;
     AP4_ByteStream *input = NULL;
@@ -52,7 +55,8 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
             m_width = (uint32_t) ((double)m_videoTrack->GetWidth() / double( 1 << 16 ) );
             m_height = (uint32_t) ((double)m_videoTrack->GetHeight() / double( 1 << 16 ) );
 			m_numSamples = m_videoTrack->GetSampleCount();
-            m_fps = decltype( m_fps )( (float) 1000 * m_numSamples / (float)m_videoTrack->GetDurationMs() );
+            m_fps = 1000.f * (float)m_numSamples / (float)m_videoTrack->GetDurationMs();
+            m_spf = decltype( m_spf )( 1.f / m_fps );
             m_codec = getTrackCodec( m_videoTrack );
         }
 
@@ -87,7 +91,7 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
     // Initialize GPU resources
     glGenBuffers( (GLsizei)m_pbos.size(), m_pbos.data() );
 
-    prebuffer();
+    if ( options.prebuffer() ) prebuffer();
 }
 
 Movie::~Movie()
@@ -159,9 +163,9 @@ Movie & Movie::play()
 	if ( m_isPlaying ) return *this;
 
 
-	m_lastFrameQueuedAt = clock::now();
+	m_lastFrameQueuedAt = clock::now() - chrono::duration_cast< clock::duration >( m_spf );
 	m_isPlaying = true;
-	queueRead();
+    if ( ! m_jobsPending ) queueRead();
 
 	return *this;
 }
@@ -190,7 +194,7 @@ void Movie::read()
 
     bufferNextCPUSample();
 
-    // Schedule next read job, or notify waiting thread that all jobs
+    // Schedule next read job or notify waiting thread that all jobs
     // have finished.
 
 	if ( m_isPlaying ) {
@@ -213,21 +217,23 @@ void Movie::waitForJobsToFinish()
 
 void Movie::update()
 {
+    const bool refresh = m_currentFrame == nullptr || m_forceRefreshCurrentFrame;
+
+    if ( refresh && m_cpuFrameBuffer.empty() ) bufferNextCPUSample();
     bufferNextGPUSample();
 
-    {
-        const auto spf = decltype( m_fps )( decltype( m_fps )( 1.f ) / m_fps );
-        const auto nextFrameTime = m_lastFrameQueuedAt + spf;
+    const auto nextFrameAt = m_lastFrameQueuedAt + chrono::duration_cast< clock::duration >( m_spf );
 
-        auto now = clock::now();
-        if ( now >= nextFrameTime && ! m_gpuFrameBuffer.empty() ) {
-            Frame::ref frame;
-            if ( m_gpuFrameBuffer.try_pop( &frame ) && frame->isBuffered() ) {
-                frame->createTexture();
-                m_currentFrame = frame->getTexture();
-                m_currentSample = frame->getSample();
-                m_lastFrameQueuedAt = now;
-            }
+    auto now = clock::now();
+    if ( ( now >= nextFrameAt || refresh ) && ! m_gpuFrameBuffer.empty() ) {
+        Frame::ref frame;
+        if ( m_gpuFrameBuffer.try_pop( &frame ) ) {
+
+            frame->createTexture();
+            m_currentFrame              = frame->getTexture();
+            m_currentSample             = frame->getSample();
+            m_forceRefreshCurrentFrame  = false;
+            m_lastFrameQueuedAt         = nextFrameAt;
         }
     }
 }
@@ -237,8 +243,7 @@ void Movie::bufferNextCPUSample()
     if ( ! m_cpuFrameBuffer.is_full() && m_readSample < m_numSamples ) {
 
         auto frame = getFrame( m_videoTrack, m_readSample );
-        if ( frame ) {
-            m_cpuFrameBuffer.push( frame );
+        if ( frame && m_cpuFrameBuffer.try_push( frame ) ) {
 
             m_readSample++;
             if ( m_loop ) m_readSample = m_readSample % m_numSamples;
@@ -252,8 +257,9 @@ void Movie::bufferNextGPUSample()
         Frame::ref frame;
         if ( m_cpuFrameBuffer.try_pop( &frame ) ) {
             frame->bufferTexture( m_pbos[ m_currentPBO ] );
-            m_gpuFrameBuffer.push( frame );
-            m_currentPBO = ( m_currentPBO + 1 ) % m_pbos.size();
+            if ( m_gpuFrameBuffer.try_push( frame ) ) {
+                m_currentPBO = ( m_currentPBO + 1 ) % m_pbos.size();
+            }
         }
     }
 }
@@ -287,7 +293,7 @@ Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
     AP4_DataBuffer sampleData;
 
 
-    if ( AP4_FAILED( track->ReadSample( i_sample, sample, sampleData ))) {
+    if ( AP4_FAILED( track->ReadSample( (AP4_Ordinal)i_sample, sample, sampleData ))) {
 		return nullptr;
     }
 
@@ -302,21 +308,23 @@ Frame::ref Movie::getFrame( AP4_Track *track, size_t i_sample ) const
 
 Movie & Movie::seekToStart()
 {
-    m_readSample = 0;
-
-    m_cpuFrameBuffer.clear();
-    m_currentFrame = nullptr;
-    
-    return *this;
+    return seekToSample( 0 );
 }
 
 Movie & Movie::seek( seconds time )
 {
     auto d = getDuration();
-    m_readSample = fmod( time, d ) / d * m_numSamples;
+    return seekToSample( (size_t)( fmod( time, d ) / d * m_numSamples ) );
+}
+
+Movie & Movie::seekToSample( size_t sample )
+{
+    if ( sample == m_readSample ) return *this;
+
+    m_readSample = sample;
 
     m_cpuFrameBuffer.clear();
-    m_currentFrame = nullptr;
+    m_forceRefreshCurrentFrame = true;
 
     return *this;
 }

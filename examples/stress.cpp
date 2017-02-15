@@ -92,7 +92,6 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         frameTimes.pop_front();
     }
 
-    for ( auto & movie : movies ) movie->update();
 
     auto now = hrclock::now();
     if ( chrono::duration_cast<chrono::seconds>( now - lastReportTime ).count() > 1 ) {
@@ -101,23 +100,15 @@ void PezUpdate( unsigned int elapsedMilliseconds )
         DBOUT( "Frame AVG ms: " << setprecision( 2 ) << avg << "ms (" << fps << " fps)" );
         lastReportTime = now;
 
-		for ( auto & movie : movies ) {
-            if ( randf() < 0.5f ) {
-                movie->seek( randf() * movie->getDuration() );
-                DBOUT( "SEEK" );
-            }
-            else {
-                if ( movie->isPlaying() && randf() < 0.5f ) {
-                    movie->stop();
-                    DBOUT( "STOP" );
-                }
-                else if ( ! movie->isPlaying() && randf() < 0.75f ) {
-                    movie->play();
-                    DBOUT( "PLAY" );
-                }
-            }
-		}
+        //float f = randf();
+        //for ( auto & movie : movies ) {
+        //    if ( movie->isPlaying() ) movie->stop().seek( f * movie->getDuration() );
+        //    else movie->play();
+        //}
     }
+
+    for ( auto & movie : movies ) if ( movie->isPlaying() ) movie->update();
+
 }
 
 
@@ -127,7 +118,7 @@ void PezRender()
 
     glActiveTexture( GL_TEXTURE0 );
 
-	int n = sqrt( movies.size() );
+	int n = (int)sqrt( movies.size() );
 	float size = COORD_EXTENTS * 2.f / (float)n;
 	int i = 0;
 	for ( auto & movie : movies ) {
@@ -162,8 +153,10 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-    string filename = "examples/videos/hap-3840x2160-24fps.mov";
+    string filename = "examples/videos/hap-1920x1080-24fps.mov";
 	srand( static_cast< unsigned >( time( 0 ) ) );
+
+    DBOUT( "OpenGL version: " << glGetString( GL_VERSION ) );
 
 	context = glvideo::Context::create( 4 );
     auto options = glvideo::Movie::Options();
@@ -196,12 +189,12 @@ static void BuildGeometry( int width, int height )
     float X = COORD_EXTENTS;
     float Y = COORD_EXTENTS;
     float verts[] = {
-            -X, -Y, 0.f * width, 1.f * height,
-            -X, +Y, 0.f * width, 0.f * height,
-            +X, +Y, 1.f * width, 0.f * height,
-            +X, +Y, 1.f * width, 0.f * height,
-            +X, -Y, 1.f * width, 1.f * height,
-            -X, -Y, 0.f * width, 1.f * height,
+            -X, -Y, 0.f * (float)width, 1.f * (float)height,
+            -X, +Y, 0.f * (float)width, 0.f * (float)height,
+            +X, +Y, 1.f * (float)width, 0.f * (float)height,
+            +X, +Y, 1.f * (float)width, 0.f * (float)height,
+            +X, -Y, 1.f * (float)width, 1.f * (float)height,
+            -X, -Y, 0.f * (float)width, 1.f * (float)height,
     };
 
     GLuint vboHandle;

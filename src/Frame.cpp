@@ -1,6 +1,8 @@
 #include "Frame.h"
+#include "gl_includes.h"
 #include <algorithm>
-#include "gl_load.h"
+#include <chrono>
+#include <debug.h>
 
 using namespace glvideo;
 using namespace std;
@@ -9,8 +11,13 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::
         m_texSize( imageSize ),
         m_texFormat( texFormat )
 {
-    m_texData = unique_ptr< unsigned char[] >( new unsigned char[ m_texSize + 1 ] );
+    m_texData = unique_ptr< unsigned char[] >( new unsigned char[ m_texSize + 1 ]() );
     copy( data, data + m_texSize, m_texData.get() );
+}
+
+Frame::~Frame()
+{
+    DBOUT( "~Frame" )
 }
 
 void Frame::createTexture()
@@ -22,6 +29,7 @@ void Frame::createTexture()
 
 bool Frame::bufferTexture( GLuint pbo )
 {
+    m_sync = nullptr;
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER, pbo );
     // Call glBufferDataARB to cancel any work the GPU is currently doing with
     // the PBO, to avoid glMapBufferARB blocking in the case that there is
@@ -36,7 +44,9 @@ bool Frame::bufferTexture( GLuint pbo )
         m_pbo = pbo;
 
         if ( m_sync ) glDeleteSync( m_sync );
-        m_sync = (GLsync)glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0L );
+
+        m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0L );
+        glFlush();
 
         return true;
     }
@@ -46,10 +56,24 @@ bool Frame::bufferTexture( GLuint pbo )
 
 bool Frame::isBuffered()
 {
+    return waitForBuffer( 0ULL );
+}
+
+bool Frame::waitForBuffer( double timeoutSeconds )
+{
+    using namespace chrono;
+
+    const GLuint64 timeout = duration_cast<nanoseconds>( duration< double >( timeoutSeconds ) ).count();
+
+    return waitForBuffer( timeout );
+}
+
+bool Frame::waitForBuffer( GLuint64 timeoutNanoseconds )
+{
     if ( m_pbo == 0 ) return false;
     if ( ! m_sync ) return false;
 
-    GLenum status = (GLenum)glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0L );
+    GLenum status = glClientWaitSync( m_sync, GL_SYNC_FLUSH_COMMANDS_BIT, timeoutNanoseconds );
     switch ( status ) {
     case GL_CONDITION_SATISFIED:
     case GL_ALREADY_SIGNALED:
