@@ -20,7 +20,6 @@ public:
     }
 
     Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::Format texFormat = FrameTexture::Format() );
-    ~Frame();
 
     Frame( const Frame& ) = delete;
     Frame& operator=( const Frame& ) = delete;
