@@ -2,9 +2,8 @@ cmake_minimum_required( VERSION 3.0 FATAL_ERROR )
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(LIBGLVIDEO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../")
+set(LIBGLVIDEO_DIR "${CMAKE_CURRENT_LIST_DIR}/../")
 
-project(libglvideo)
 
 #if(MSVC)
 #    string(REPLACE "/MD " "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -115,7 +114,7 @@ include_directories(${OPENGL_INCLUDE_DIRS})
 set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL_LIBRARIES})
 
 
-# glvideo
+# libglvideo
 
 list( APPEND LIBGLVIDEO_INCLUDE_DIRS
         "${LIBGLVIDEO_DIR}/include"
