@@ -2,7 +2,6 @@
 #include "gl_includes.h"
 #include <algorithm>
 #include <chrono>
-#include <debug.h>
 
 using namespace glvideo;
 using namespace std;
@@ -13,11 +12,6 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::
 {
     m_texData = unique_ptr< unsigned char[] >( new unsigned char[ m_texSize + 1 ]() );
     copy( data, data + m_texSize, m_texData.get() );
-}
-
-Frame::~Frame()
-{
-    DBOUT( "~Frame" )
 }
 
 void Frame::createTexture()

@@ -60,7 +60,7 @@ void main()
 
 
 const float COORD_EXTENTS = 1.f;
-const int NUM_MOVIES = 4;
+const int NUM_MOVIES = 1;
 std::vector< glvideo::Movie::ref > movies;
 glvideo::Context::ref context;
 
@@ -153,7 +153,7 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-    string filename = "examples/videos/hap-1920x1080-24fps.mov";
+    string filename = "examples/videos/hap-3840x2160-24fps.mov";
 	srand( static_cast< unsigned >( time( 0 ) ) );
 
     DBOUT( "OpenGL version: " << glGetString( GL_VERSION ) );
@@ -176,8 +176,15 @@ const char *PezInitialize( int width, int height )
 		movie->loop().play();
 	}
 
-    BuildGeometry( movies[0]->getWidth(), movies[0]->getHeight() );
-	shader = LoadEffect( movies[0]->getCodec() == "HapY" );
+    if ( ! movies.empty() ) {
+        BuildGeometry( movies[ 0 ]->getWidth(), movies[ 0 ]->getHeight() );
+        shader = LoadEffect( movies[ 0 ]->getCodec() == "HapY" );
+
+        auto copy = movies[ 0 ];
+        movies.push_back( copy );
+        movies.push_back( copy );
+        movies.push_back( copy );
+    }
 
 
     return "Test Playback";
