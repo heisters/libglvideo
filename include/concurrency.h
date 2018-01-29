@@ -2,6 +2,7 @@
 
 // based on https://www.justsoftwaresolutions.co.uk/threading/implementing-a-thread-safe-queue-using-condition-variables.html
 
+#include <string>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
@@ -75,9 +76,11 @@ private:
     size_t m_maxSize;
 
 public:
+    typedef std::mutex mutex;
+
     class buffer_full_error : public std::logic_error {
     public:
-        explicit buffer_full_error( const std::string & what = "attempting to add element to a full buffer" ) :
+        explicit buffer_full_error( std::string what = "attempting to add element to a full buffer" ) :
             std::logic_error( what ) { }
     };
 
@@ -102,11 +105,11 @@ public:
         {
             std::lock_guard< mutex > lock( this->m_mutex );
             if ( this->m_queue.size() < m_maxSize ) {
-                m_queue.push( data );
+                this->m_queue.push( data );
                 success = true;
             }
         }
-        m_cv.notify_one();
+        this->m_cv.notify_one();
         return success;
     }
 
@@ -116,11 +119,11 @@ public:
         {
             std::lock_guard< mutex > lock( this->m_mutex );
             if ( this->m_queue.size() < m_maxSize ) {
-                m_queue.emplace( data );
+                this->m_queue.emplace( data );
                 success = true;
             }
         }
-        m_cv.notify_one();
+        this->m_cv.notify_one();
         return success;
     }
 
@@ -141,7 +144,7 @@ public:
     size_t remainingSize() const
     {
         std::lock_guard< mutex > lock( this->m_mutex );
-        return max( 0, (int)m_maxSize - (int)this->m_queue.size() );
+        return std::max( 0, (int)m_maxSize - (int)this->m_queue.size() );
     }
 };
 
