@@ -50,6 +50,17 @@ make
 
 or maybe use `cmake .. -G "Visual Studio 14 2015 Win64"` if you're on Windows.
 
+CMake
+-----
+
+To incorporate this library into another project with CMake, add something like the
+following lines to your CMakeLists.txt file:
+
+    get_filename_component(LIBGLVIDEO_PATH  "${APP_PATH}/lib/libglvideo" ABSOLUTE)
+    find_package(libglvideo REQUIRED PATHS "${LIBGLVIDEO_PATH}/cmake" NO_DEFAULT_PATH)
+    include_directories("${LIBGLVIDEO_INCLUDE_DIRS}")
+    target_link_libraries(my-executable libglvideo)
+
 License
 -------
 
