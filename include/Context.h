@@ -21,6 +21,8 @@ public:
 
 	~Worker();
 
+    void stop();
+
 private:
 	void work();
 
@@ -43,6 +45,8 @@ public:
 
 	Context( const Context& ) = delete;
 	Context& operator=( const Context& ) = delete;
+
+	~Context();
 
 	void queueJob( context_job job );
 

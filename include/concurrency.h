@@ -22,42 +22,46 @@ protected:
     bool m_run = true;
 
 public:
-    virtual void interrupt()
+    virtual void abort()
     {
         {
-            std::lock_guard<mutex> lock( m_mutex );
+            std::unique_lock< mutex > lock( m_mutex );
             m_run = false;
+            m_cv.notify_all();
         }
-        m_cv.notify_one();
     }
 
     virtual void push( Data const &data )
     {
+        bool wasEmpty = false;
         {
-            std::lock_guard< mutex > lock( m_mutex );
+            std::unique_lock< mutex > lock( m_mutex );
+            wasEmpty = m_queue.empty();
             m_queue.push( data );
         }
-        m_cv.notify_one();
+        if ( wasEmpty ) m_cv.notify_one();
     }
 
     virtual void emplace( Data const &&data )
     {
+        bool wasEmpty = false;
         {
-            std::lock_guard< mutex > lock( m_mutex );
+            std::unique_lock< mutex > lock( m_mutex );
+            wasEmpty = m_queue.empty();
             m_queue.emplace( data );
         }
-        m_cv.notify_one();
+        if ( wasEmpty ) m_cv.notify_one();
     }
 
     bool empty() const
     {
-        std::lock_guard< mutex > lock( m_mutex );
+        std::unique_lock< mutex > lock( m_mutex );
         return m_queue.empty();
     }
 
     bool try_pop( Data *popped_value )
     {
-        std::lock_guard< mutex > lock( m_mutex );
+        std::unique_lock< mutex > lock( m_mutex );
         if ( m_queue.empty()) {
             return false;
         }
@@ -70,10 +74,9 @@ public:
     void wait_and_pop( Data *popped_value )
     {
         std::unique_lock< mutex > lock( m_mutex );
-        m_cv.wait( lock, [&]{ return ! m_queue.empty() || ! m_run; } );
+        m_cv.wait( lock, [this]() -> bool { return ! m_queue.empty() || ! m_run; } );
 
-        if ( ! m_run ) { m_run = true; return; }
-        if ( m_queue.empty() ) return;
+        if ( ! m_run || m_queue.empty() ) return;
 
         *popped_value = m_queue.front();
         m_queue.pop();
