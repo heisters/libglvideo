@@ -6,6 +6,7 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 namespace glvideo {
 
@@ -15,11 +16,20 @@ public:
     typedef std::mutex mutex;
 
 protected:
-    std::queue<Data> m_queue;
+    std::queue< Data > m_queue;
     mutable mutex m_mutex;
     std::condition_variable m_cv;
+    bool m_run = true;
 
 public:
+    virtual void interrupt()
+    {
+        {
+            std::lock_guard<mutex> lock( m_mutex );
+            m_run = false;
+        }
+        m_cv.notify_one();
+    }
 
     virtual void push( Data const &data )
     {
@@ -60,9 +70,10 @@ public:
     void wait_and_pop( Data *popped_value )
     {
         std::unique_lock< mutex > lock( m_mutex );
-        while ( m_queue.empty()) {
-            m_cv.wait( lock );
-        }
+        m_cv.wait( lock, [&]{ return ! m_queue.empty() || ! m_run; } );
+
+        if ( ! m_run ) { m_run = true; return; }
+        if ( m_queue.empty() ) return;
 
         *popped_value = m_queue.front();
         m_queue.pop();

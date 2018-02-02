@@ -20,6 +20,7 @@ Worker::Worker( concurrent_queue< context_job > & queue ) :
 Worker::~Worker()
 {
 	m_doWork = false;
+    m_queue.interrupt();
 	if ( m_thread.joinable() ) m_thread.join();
 }
 
