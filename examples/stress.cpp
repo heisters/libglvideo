@@ -32,7 +32,7 @@ static const std::string FRAGMENT_SHADER_SOURCE =
 R"EOF(
 #version 410
 in vec2 vTexCoord;
-uniform sampler2DRect Sampler;
+uniform sampler2D Sampler;
 out vec4 oColor;
 
 void main()
@@ -45,7 +45,7 @@ static const std::string YCoCg_FRAGMENT_SHADER_SOURCE =
 R"EOF(
 #version 410
 in vec2 vTexCoord;
-uniform sampler2DRect Sampler;
+uniform sampler2D Sampler;
 out vec4 oColor;
 
 void main()
@@ -141,7 +141,8 @@ void PezRender()
 			glDrawArrays( GL_TRIANGLES, 0, 6 );
 			glBindTexture( frame->getTextureTarget(), 0 );
 		}
-		else {
+
+        else {
 			DBOUT( "NO FRAME!" );
 		}
 
@@ -153,7 +154,7 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-    string filename = "examples/videos/hap-3840x2160-24fps.mov";
+    string filename = "examples/videos/hap-1920x1080-24fps.mov";
 	srand( static_cast< unsigned >( time( 0 ) ) );
 
     DBOUT( "OpenGL version: " << glGetString( GL_VERSION ) );
@@ -196,12 +197,12 @@ static void BuildGeometry( int width, int height )
     float X = COORD_EXTENTS;
     float Y = COORD_EXTENTS;
     float verts[] = {
-            -X, -Y, 0.f * (float)width, 1.f * (float)height,
-            -X, +Y, 0.f * (float)width, 0.f * (float)height,
-            +X, +Y, 1.f * (float)width, 0.f * (float)height,
-            +X, +Y, 1.f * (float)width, 0.f * (float)height,
-            +X, -Y, 1.f * (float)width, 1.f * (float)height,
-            -X, -Y, 0.f * (float)width, 1.f * (float)height,
+            -X, -Y, 0.f, 1.f,
+            -X, +Y, 0.f, 0.f,
+            +X, +Y, 1.f, 0.f,
+            +X, +Y, 1.f, 0.f,
+            +X, -Y, 1.f, 1.f,
+            -X, -Y, 0.f, 1.f,
     };
 
     GLuint vboHandle;
@@ -210,11 +211,9 @@ static void BuildGeometry( int width, int height )
     GLenum usage = GL_STATIC_DRAW;
     GLvoid *texCoordOffset = (GLvoid *) (sizeof( float ) * 2);
 
-#if defined(GLVIDEO_MSW)
 	GLuint vao;
 	glGenVertexArrays( 1, &vao );
 	glBindVertexArray( vao );
-#endif
 
     glGenBuffers( 1, &vboHandle );
 	glBindBuffer( GL_ARRAY_BUFFER, vboHandle );

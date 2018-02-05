@@ -51,8 +51,7 @@ void main()
     float Co = color.x - ( 0.5 * 256.0 / 255.0 );
     float Cg = color.y - ( 0.5 * 256.0 / 255.0 );
     float Y = color.w;
-    //oColor = vec4( Y + Co - Cg, Y + Cg, Y - Co - Cg, color.a );
-oColor = vec4(1.0, 0.0, 0.0, 1.0);
+    oColor = vec4( Y + Co - Cg, Y + Cg, Y - Co - Cg, color.a );
 }
 )EOF";
 
