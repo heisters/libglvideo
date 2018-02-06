@@ -128,9 +128,14 @@ seconds Movie::getDuration() const
     return (seconds) m_file->GetMovie()->GetDurationMs() / 1000.0;
 }
 
+seconds Movie::getElapsedTime() const
+{
+    return (double)m_currentSample / (double)m_numSamples * getDuration();
+}
+
 seconds Movie::getRemainingTime() const
 {
-	return (double)( m_numSamples - m_currentSample ) / (double)m_numSamples * getDuration();
+	return getDuration() - getElapsedTime();
 }
 
 std::string Movie::getTrackCodec( size_t index ) const

@@ -104,6 +104,9 @@ public:
     /// Returns the length of the movie in seconds.
     seconds getDuration() const;
 
+    /// Returns the position of the playhead in seconds.
+    seconds getElapsedTime() const;
+
 	/// Returns the remaining amount of time in seconds.
 	seconds getRemainingTime() const;
 
