@@ -207,8 +207,9 @@ void Movie::read()
 	}
 
 	else {
+        unique_lock< mutex > lock( m_jobsMutex );
 		m_jobsPending = false;
-		m_jobsPendingCV.notify_one();
+		m_jobsPendingCV.notify_all();
 	}
 }
 
