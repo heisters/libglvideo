@@ -14,6 +14,7 @@ static size_t NEXT_ID = 1;
 
 Movie::Movie( const Context::ref &context, const string &filename, const Options &options ) :
 	m_context( context ),
+    m_filename( filename ),
 	m_options( options ),
 	m_cpuFrameBuffer( options.cpuBufferSize() ),
     m_pbos( options.gpuBufferSize(), 0 ),
@@ -93,6 +94,10 @@ Movie::Movie( const Context::ref &context, const string &filename, const Options
 
     if ( options.prebuffer() ) prebuffer();
 }
+
+Movie::Movie( const Movie & other ) :
+Movie( other.m_context, other.m_filename, other.m_options )
+{ }
 
 Movie::~Movie()
 {
@@ -228,7 +233,7 @@ void Movie::update()
     if ( refresh && m_cpuFrameBuffer.empty() ) bufferNextCPUSample();
     bufferNextGPUSample();
 
-    const auto nextFrameAt = m_lastFrameQueuedAt + chrono::duration_cast< clock::duration >( m_spf );
+    const auto nextFrameAt = m_lastFrameQueuedAt + chrono::duration_cast< clock::duration >( m_spf / m_playbackRate );
 
     auto now = clock::now();
     if ( ( now >= nextFrameAt || refresh ) && ! m_gpuFrameBuffer.empty() ) {
@@ -320,17 +325,26 @@ Movie & Movie::seekToStart()
 Movie & Movie::seek( seconds time )
 {
     auto d = getDuration();
+    if ( time < 0.0 ) time = 0.0;
+    if ( time >= d ) time = d;
     return seekToSample( (size_t)( fmod( time, d ) / d * m_numSamples ) );
 }
 
 Movie & Movie::seekToSample( size_t sample )
 {
     if ( sample == m_readSample ) return *this;
+    if ( sample >= m_numSamples ) sample = m_numSamples - 1;
 
     m_readSample = sample;
 
     m_cpuFrameBuffer.clear();
     m_forceRefreshCurrentFrame = true;
 
+    return *this;
+}
+
+Movie & Movie::setPlaybackRate( float rate )
+{
+    m_playbackRate = rate;
     return *this;
 }

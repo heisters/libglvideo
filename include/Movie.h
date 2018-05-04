@@ -75,6 +75,13 @@ public:
         return ref( new Movie( context, filename, options ));
     }
 
+    /// Returns a ref to a movie constructed from another movie.
+    static ref
+    create( const Movie & original )
+    {
+        return ref( new Movie( original ) );
+    }
+
     /// Constructs a movie from a \a texContext, and a source \a filename.
     ///
     /// @param  texContext  a shared GL context that will be used to create textures on a separate thread.
@@ -85,7 +92,9 @@ public:
 
     ~Movie();
 
-    Movie( const Movie& ) = delete;
+    /// Constructs a new movie with the same parameters as the original
+    explicit Movie( const Movie& original );
+
     Movie& operator=( const Movie& ) = delete;
 
 
@@ -144,6 +153,12 @@ public:
     /// Set the playhead to a given \a sample number.
     Movie & seekToSample( size_t sample );
 
+    /// Get the playback rate as a multiple of the native framerate.
+    float getPlaybackRate() const { return m_playbackRate; };
+
+    /// Set the playback rate to a multiple of its native framerate.
+    Movie & setPlaybackRate( float rate );
+
     /// Returns the current Frame.
     FrameTexture::ref getCurrentFrame() const;
 
@@ -160,6 +175,7 @@ private:
     std::string getTrackCodec( AP4_Track * track ) const;
 
 
+    std::string m_filename;
     AP4_File *m_file = NULL;
     std::map<size_t, uint32_t> m_trackIndexMap;
     Options m_options;
@@ -168,6 +184,7 @@ private:
     AP4_Track * m_videoTrack = nullptr;
     float m_fps;
     std::chrono::duration< float > m_spf;
+    float m_playbackRate = 1.f;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     std::string m_codec;
