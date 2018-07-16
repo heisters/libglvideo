@@ -97,6 +97,8 @@ public:
 
     Movie& operator=( const Movie& ) = delete;
 
+    /// Returns the filename passed during construction.
+    std::string getFilename() const { return m_filename; }
 
     /// Returns a string representation of the container format (eg. "qt 512").
     std::string getFormat() const;
