@@ -36,6 +36,23 @@ Coming soon
 * OpenEXR?
 * audio
 
+Examples
+--------
+
+There are two bare-bones example applications in the [examples](examples/) directory:
+play and stress. They require test videos under examples/videos/ which can be fetched
+with git lfs: `git lfs fetch`. If that doesn't work, you can re-generate them by doing:
+
+```
+cd examples/videos
+./generate.sh
+```
+
+This requires ffmpeg be installed with HapQ support.
+
+You will need to run the examples from the examples directory for them to be able to find
+the test videos. If all else fails, you can edit the paths in [play.cpp](examples/play.cpp)
+or [stress.cpp](examples/stress.cpp) to point at really any HapQ mov/mp4.
 
 Building
 --------
