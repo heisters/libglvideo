@@ -182,13 +182,16 @@ Movie & Movie::play()
 
 Movie & Movie::stop()
 {
-    m_isPlaying = false;
+	pause();
+	seekToStart();
 
 	return *this;
 }
 
 Movie & Movie::pause()
 {
+	m_isPlaying = false;
+
 	return *this;
 }
 
