@@ -16,12 +16,11 @@ static const std::string VERTEX_SHADER_SOURCE =
 in vec2 aPosition;
 in vec2 aTexCoord;
 out vec2 vTexCoord;
-uniform mat4 uModelMatrix;
 
 void main()
 {
     vTexCoord = aTexCoord;
-    gl_Position = uModelMatrix * vec4(aPosition, 0, 1);
+    gl_Position = vec4( aPosition, 0.0, 1.0 );
 }
 )EOF";
 
