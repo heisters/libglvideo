@@ -8,7 +8,7 @@ namespace decoders {
 
 class Hap : public Decoder {
 public:
-    static bool matches( const std::string &codec ) { return codec == "HapY"; }
+    static bool matches( const std::string &codec ) { return codec == "Hap1" || codec == "Hap5" || codec == "HapY"; }
 
     Hap( int w, int h, AP4_DataBuffer *sample0 );
 
