@@ -154,7 +154,7 @@ void PezRender()
 
 const char *PezInitialize( int width, int height )
 {
-    string filename = "examples/videos/hap-1920x1080-24fps.mov";
+    string filename = "videos/hap-1920x1080-24fps.mov";
 	srand( static_cast< unsigned >( time( 0 ) ) );
 
     DBOUT( "OpenGL version: " << glGetString( GL_VERSION ) );
