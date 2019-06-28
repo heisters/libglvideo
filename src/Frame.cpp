@@ -10,7 +10,7 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::
         m_texSize( imageSize ),
         m_texFormat( texFormat )
 {
-    m_texData = unique_ptr< unsigned char[] >( new unsigned char[ m_texSize + 1 ]() );
+    m_texData = make_unique< unsigned char[] >( m_texSize );
     copy( data, data + m_texSize, m_texData.get() );
 }
 
