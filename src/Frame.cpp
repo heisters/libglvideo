@@ -14,6 +14,11 @@ Frame::Frame( unsigned char const *const data, GLsizei imageSize, FrameTexture::
     copy( data, data + m_texSize, m_texData.get() );
 }
 
+Frame::~Frame()
+{
+    if ( m_sync ) glDeleteSync( m_sync );
+}
+
 void Frame::createTexture()
 {
     if ( m_ftex ) return;
@@ -23,7 +28,6 @@ void Frame::createTexture()
 
 bool Frame::bufferTexture( GLuint pbo )
 {
-    m_sync = nullptr;
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER, pbo );
     // Call glBufferDataARB to cancel any work the GPU is currently doing with
     // the PBO, to avoid glMapBufferARB blocking in the case that there is
@@ -31,21 +35,19 @@ bool Frame::bufferTexture( GLuint pbo )
     glBufferData( GL_PIXEL_UNPACK_BUFFER, m_texSize, NULL, GL_STATIC_DRAW );
 
     GLubyte* buffer = (GLubyte*)glMapBuffer( GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY );
+    if ( ! buffer ) return false;
 
-    if ( buffer ) {
-        copy( m_texData.get(), m_texData.get() + m_texSize, buffer );
-        glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER );
-        m_pbo = pbo;
 
-        if ( m_sync ) glDeleteSync( m_sync );
+    copy( m_texData.get(), m_texData.get() + m_texSize, buffer );
+    glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER );
+    m_pbo = pbo;
 
-        m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0L );
-        glFlush();
+    if ( m_sync ) glDeleteSync( m_sync );
 
-        return true;
-    }
+    m_sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0L );
+    glFlush();
 
-    return false;
+    return true;
 }
 
 bool Frame::isBuffered()
