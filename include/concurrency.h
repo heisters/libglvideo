@@ -101,13 +101,13 @@ public:
     concurrent_buffer() = delete;
     concurrent_buffer( size_t size ) : m_maxSize( size ) {}
 
-    virtual void push( Data const &data )
+    virtual void push( Data const & data )
     {
         if ( is_full() ) throw buffer_full_error();
         concurrent_queue< Data >::push( data );
     }
 
-    virtual void emplace( Data const &&data )
+    virtual void emplace( Data const && data )
     {
         if ( is_full() ) throw buffer_full_error();
         concurrent_queue< Data >::emplace( std::move( data ) );
