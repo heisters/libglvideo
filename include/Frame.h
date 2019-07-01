@@ -23,6 +23,7 @@ public:
 
     Frame( const Frame& ) = delete;
     Frame& operator=( const Frame& ) = delete;
+    ~Frame();
 
 
     bool hasTexture() const { return *m_ftex; }
