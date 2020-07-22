@@ -40,6 +40,7 @@ bool Frame::bufferTexture( GLuint pbo )
 
     copy( m_texData.get(), m_texData.get() + m_texSize, buffer );
     glUnmapBuffer( GL_PIXEL_UNPACK_BUFFER );
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); // Unbind
     m_pbo = pbo;
 
     if ( m_sync ) glDeleteSync( m_sync );
